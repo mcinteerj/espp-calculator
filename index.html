@@ -807,7 +807,7 @@ input[type="range"]::-moz-range-thumb {
     <button class="accordion-trigger" aria-expanded="false" onclick="toggleAccordion(this)">
       The 15% Discount & Lookback
     </button>
-    <div class="accordion-content">
+    <div class="accordion-content" aria-hidden="true">
       <p>Most Section 423 ESPPs let you purchase company stock at a <strong>15% discount</strong> from the market price. If your plan has a <strong>lookback provision</strong>, you get the discount applied to the <em>lower</em> of the stock price at the offering start date or the purchase date.</p>
       <div class="callout">
         <strong>Example:</strong> If the stock was $100 at the start and $150 at purchase, your purchase price with lookback is 85% × $100 = <strong>$85</strong> (not 85% × $150 = $127.50). You're buying $150 stock for $85 — a 43% immediate gain.
@@ -820,7 +820,7 @@ input[type="range"]::-moz-range-thumb {
     <button class="accordion-trigger" aria-expanded="false" onclick="toggleAccordion(this)">
       The $25K Annual Limit
     </button>
-    <div class="accordion-content">
+    <div class="accordion-content" aria-hidden="true">
       <p>The IRS limits Section 423 ESPP purchases to <strong>$25,000 of fair market value per calendar year</strong>. The critical detail: FMV is measured at the <em>offering start price</em>, not the discounted purchase price.</p>
       <div class="callout">
         <strong>Key insight:</strong> The limit is based on the stock price when the offering STARTED, not what you paid. A higher start price consumes your $25K capacity faster.
@@ -836,7 +836,7 @@ Low start price  ($150):  $25,000 ÷ $150 = 166.7 shares max</pre>
     <button class="accordion-trigger" aria-expanded="false" onclick="toggleAccordion(this)">
       Cross-Year Offerings & the Ordering Rule
     </button>
-    <div class="accordion-content">
+    <div class="accordion-content" aria-hidden="true">
       <p>When an offering spans two calendar years (e.g., Dec 2025 → Jun 2026), it can draw from <strong>both years' $25K buckets</strong>. The <strong>ordering rule</strong> requires filling the earlier year's bucket first.</p>
 <pre>
 ┌─── 2025 [$25K] ───┐    ┌─── 2026 [$25K] ───┐
@@ -856,7 +856,7 @@ Low start price  ($150):  $25,000 ÷ $150 = 166.7 shares max</pre>
     <button class="accordion-trigger" aria-expanded="false" onclick="toggleAccordion(this)">
       The Always-Enroll Strategy
     </button>
-    <div class="accordion-content">
+    <div class="accordion-content" aria-hidden="true">
       <p>Most plans allow you to <strong>withdraw up to ~5 business days before the purchase date</strong>. This creates a useful strategy:</p>
       <div class="callout">
         <strong>Always enroll.</strong> Enrolling preserves your optionality — you can always withdraw later. Not enrolling forfeits the opportunity entirely.
@@ -1677,7 +1677,15 @@ function toggleAccordion(trigger) {
   const expanded = trigger.getAttribute('aria-expanded') === 'true';
   trigger.setAttribute('aria-expanded', !expanded);
   content.classList.toggle('open');
+  content.setAttribute('aria-hidden', expanded);
 }
+
+// Keyboard support for accordions
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && e.target.classList.contains('accordion-trigger')) {
+    toggleAccordion(e.target);
+  }
+});
 
 // ── Input Change Listeners ──
 function setupListeners() {
