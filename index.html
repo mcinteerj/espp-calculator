@@ -1003,7 +1003,7 @@ function generateOfferings(p1Start, p1End, p2Start, p2End, referenceDate, numYea
   if (currentIdx === -1) currentIdx = offerings.length - 1;
 
   // Keep current + N previous offerings (covering numYears of history)
-  const numOfferings = numYears * 2 + 1; // 2 per year + current
+  const numOfferings = numYears * 2; // 2 offerings per year
   const startIdx = Math.max(0, currentIdx - numOfferings + 1);
   const relevant = offerings.slice(startIdx, currentIdx + 1);
 
