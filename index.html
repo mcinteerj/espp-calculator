@@ -1,0 +1,1739 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Section 423 ESPP Calculator</title>
+<style>
+/* ── Reset & Base ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #fafafa;
+  --surface: #ffffff;
+  --text: #334155;
+  --text-muted: #64748b;
+  --text-heading: #1a1a2e;
+  --border: #e2e8f0;
+  --border-strong: #cbd5e1;
+  --header-bg: #1a1a2e;
+  --header-text: #e2e8f0;
+  --teal: #0d9488;
+  --teal-bg: #f0fdfa;
+  --teal-border: #99f6e4;
+  --amber: #d97706;
+  --amber-bg: #fffbeb;
+  --amber-border: #fde68a;
+  --red: #dc2626;
+  --red-bg: #fef2f2;
+  --red-border: #fecaca;
+  --indigo: #6366f1;
+  --sky: #0ea5e9;
+  --slate-chart: #64748b;
+  --input-bg: #ffffff;
+  --shadow: 0 1px 3px rgba(0,0,0,0.08);
+  --shadow-lg: 0 4px 12px rgba(0,0,0,0.1);
+  --mono: 'SF Mono', 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+  --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  --radius: 4px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0f172a;
+    --surface: #1e293b;
+    --text: #cbd5e1;
+    --text-muted: #94a3b8;
+    --text-heading: #f1f5f9;
+    --border: #334155;
+    --border-strong: #475569;
+    --header-bg: #020617;
+    --header-text: #e2e8f0;
+    --teal-bg: #042f2e;
+    --teal-border: #115e59;
+    --amber-bg: #451a03;
+    --amber-border: #92400e;
+    --red-bg: #450a0a;
+    --red-border: #991b1b;
+    --input-bg: #0f172a;
+    --shadow: 0 1px 3px rgba(0,0,0,0.3);
+    --shadow-lg: 0 4px 12px rgba(0,0,0,0.4);
+  }
+}
+
+body {
+  font-family: var(--sans);
+  color: var(--text);
+  background: var(--bg);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Header ── */
+header {
+  background: var(--header-bg);
+  color: var(--header-text);
+  padding: 2rem 1.5rem 1.5rem;
+  text-align: center;
+}
+header h1 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin-bottom: 0.25rem;
+}
+header p { font-size: 0.875rem; opacity: 0.8; }
+.caveat {
+  font-size: 0.75rem;
+  opacity: 0.6;
+  margin-top: 0.75rem;
+}
+.caveat a { color: var(--teal); text-decoration: underline; }
+
+/* ── Layout ── */
+main {
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 1.5rem 1rem;
+}
+
+section { margin-bottom: 2rem; }
+
+/* ── Cards & Panels ── */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.25rem;
+  box-shadow: var(--shadow);
+}
+
+.section-title {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  margin-bottom: 0.75rem;
+}
+
+/* ── Form Elements ── */
+label {
+  display: block;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--text);
+  margin-bottom: 0.25rem;
+}
+
+input[type="text"],
+input[type="number"],
+select {
+  font-family: var(--mono);
+  font-size: 0.875rem;
+  padding: 0.5rem 0.625rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--input-bg);
+  color: var(--text);
+  width: 100%;
+  transition: border-color 0.15s;
+}
+input:focus, select:focus {
+  outline: none;
+  border-color: var(--teal);
+}
+input[type="checkbox"] { accent-color: var(--teal); }
+
+.input-row {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  align-items: end;
+}
+.input-group { flex: 1; min-width: 120px; }
+.input-group.narrow { flex: 0 0 100px; min-width: 80px; }
+
+.input-prefix {
+  position: relative;
+}
+.input-prefix::before {
+  content: '$';
+  position: absolute;
+  left: 0.625rem;
+  top: 50%;
+  transform: translateY(-50%);
+  font-family: var(--mono);
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  pointer-events: none;
+}
+.input-prefix input { padding-left: 1.25rem; }
+
+.input-suffix {
+  position: relative;
+}
+.input-suffix::after {
+  content: '%';
+  position: absolute;
+  right: 0.625rem;
+  top: 50%;
+  transform: translateY(-50%);
+  font-family: var(--mono);
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  pointer-events: none;
+}
+.input-suffix input { padding-right: 1.5rem; }
+
+/* ── Buttons ── */
+.btn {
+  font-family: var(--sans);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  padding: 0.5rem 1rem;
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: all 0.15s;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+.btn-primary {
+  background: var(--teal);
+  color: #fff;
+}
+.btn-primary:hover { opacity: 0.9; }
+.btn-secondary {
+  background: transparent;
+  color: var(--text);
+  border-color: var(--border);
+}
+.btn-secondary:hover { border-color: var(--border-strong); }
+.btn-lg {
+  font-size: 0.9375rem;
+  padding: 0.75rem 1.5rem;
+}
+
+/* ── Offerings Table ── */
+.offerings-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8125rem;
+}
+.offerings-table th {
+  text-align: left;
+  font-weight: 600;
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  padding: 0.5rem 0.625rem;
+  border-bottom: 2px solid var(--border);
+}
+.offerings-table td {
+  padding: 0.5rem 0.625rem;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+.offerings-table .current-row { background: var(--teal-bg); }
+.offerings-table input {
+  width: 70px;
+  text-align: right;
+  padding: 0.25rem 0.375rem;
+  font-size: 0.8125rem;
+}
+.offerings-table .price-cell {
+  font-family: var(--mono);
+  cursor: pointer;
+  position: relative;
+}
+.offerings-table .price-cell:hover { color: var(--teal); }
+.badge {
+  display: inline-block;
+  font-size: 0.625rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 0.125rem 0.375rem;
+  border-radius: 2px;
+  background: var(--teal);
+  color: #fff;
+  margin-left: 0.375rem;
+}
+
+/* ── Recommendation Box ── */
+.recommendation {
+  padding: 1.25rem;
+  border-radius: var(--radius);
+  border-left: 4px solid;
+  margin-bottom: 1.5rem;
+}
+.recommendation.green {
+  border-color: var(--teal);
+  background: var(--teal-bg);
+}
+.recommendation.amber {
+  border-color: var(--amber);
+  background: var(--amber-bg);
+}
+.recommendation.red {
+  border-color: var(--red);
+  background: var(--red-bg);
+}
+.recommendation .rec-title {
+  font-weight: 700;
+  font-size: 1rem;
+  margin-bottom: 0.375rem;
+  color: var(--text-heading);
+}
+.recommendation .rec-body {
+  font-size: 0.875rem;
+  line-height: 1.6;
+}
+.recommendation .rec-link {
+  font-size: 0.75rem;
+  margin-top: 0.5rem;
+}
+.recommendation .rec-link a { color: var(--teal); }
+
+/* ── Bucket Bars ── */
+.bucket-chart { margin-bottom: 1.5rem; }
+.bucket-year {
+  margin-bottom: 1rem;
+}
+.bucket-label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-heading);
+  margin-bottom: 0.25rem;
+  display: flex;
+  justify-content: space-between;
+}
+.bucket-bar-track {
+  height: 28px;
+  background: var(--border);
+  border-radius: 3px;
+  overflow: hidden;
+  display: flex;
+  position: relative;
+}
+.bucket-segment {
+  height: 100%;
+  position: relative;
+  transition: width 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.625rem;
+  font-weight: 600;
+  color: #fff;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+}
+.bucket-segment.projected {
+  background-image: repeating-linear-gradient(
+    -45deg,
+    transparent,
+    transparent 3px,
+    rgba(255,255,255,0.25) 3px,
+    rgba(255,255,255,0.25) 6px
+  );
+}
+.bucket-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 0.375rem;
+  font-size: 0.6875rem;
+  color: var(--text-muted);
+}
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+.legend-swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+/* ── Metric Cards ── */
+.metrics-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+.metric-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.875rem;
+}
+.metric-label {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  margin-bottom: 0.25rem;
+}
+.metric-value {
+  font-family: var(--mono);
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-heading);
+}
+.metric-note {
+  font-size: 0.6875rem;
+  color: var(--text-muted);
+  margin-top: 0.125rem;
+}
+
+/* ── Price Slider ── */
+.slider-section {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.25rem;
+  margin-bottom: 1.5rem;
+}
+.slider-header {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text-heading);
+  margin-bottom: 0.75rem;
+}
+.slider-container {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+.slider-wrap {
+  flex: 1;
+  min-width: 200px;
+  position: relative;
+}
+input[type="range"] {
+  -webkit-appearance: none;
+  width: 100%;
+  height: 4px;
+  background: var(--border);
+  border-radius: 2px;
+  outline: none;
+}
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 18px;
+  height: 18px;
+  background: var(--teal);
+  border-radius: 50%;
+  cursor: pointer;
+}
+input[type="range"]::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  background: var(--teal);
+  border-radius: 50%;
+  cursor: pointer;
+  border: none;
+}
+.slider-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.625rem;
+  color: var(--text-muted);
+  margin-top: 0.25rem;
+  font-family: var(--mono);
+}
+.slider-current-marker {
+  font-size: 0.625rem;
+  color: var(--teal);
+  font-weight: 600;
+  text-align: center;
+  margin-top: 0.125rem;
+}
+.slider-results {
+  display: flex;
+  gap: 1.25rem;
+  flex-wrap: wrap;
+  font-size: 0.8125rem;
+}
+.slider-stat { text-align: center; }
+.slider-stat .stat-value {
+  font-family: var(--mono);
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-heading);
+}
+.slider-stat .stat-label {
+  font-size: 0.625rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.slider-note {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-top: 0.5rem;
+  font-style: italic;
+}
+
+/* ── LLM Prompt ── */
+.prompt-section { text-align: center; margin: 1.5rem 0; }
+.btn-copy-prompt {
+  background: var(--header-bg);
+  color: var(--header-text);
+}
+.btn-copy-prompt:hover { opacity: 0.9; }
+.prompt-hint {
+  font-size: 0.6875rem;
+  color: var(--text-muted);
+  margin-top: 0.5rem;
+}
+
+/* ── Accordion ── */
+.accordion { margin-bottom: 0.5rem; }
+.accordion-trigger {
+  width: 100%;
+  text-align: left;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.875rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-heading);
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: all 0.15s;
+}
+.accordion-trigger:hover { border-color: var(--border-strong); }
+.accordion-trigger::after {
+  content: '+';
+  font-size: 1.125rem;
+  font-weight: 300;
+  color: var(--text-muted);
+  transition: transform 0.2s;
+}
+.accordion-trigger[aria-expanded="true"]::after {
+  content: '−';
+}
+.accordion-content {
+  display: none;
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-top: none;
+  border-radius: 0 0 var(--radius) var(--radius);
+  background: var(--surface);
+  font-size: 0.8125rem;
+  line-height: 1.7;
+}
+.accordion-content.open { display: block; }
+.accordion-content p { margin-bottom: 0.75rem; }
+.accordion-content .callout {
+  background: var(--teal-bg);
+  border: 1px solid var(--teal-border);
+  border-radius: var(--radius);
+  padding: 0.75rem;
+  margin: 0.75rem 0;
+  font-size: 0.8125rem;
+}
+.accordion-content pre {
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.75rem;
+  overflow-x: auto;
+  margin: 0.75rem 0;
+  line-height: 1.5;
+  white-space: pre;
+}
+
+/* ── Disclaimers ── */
+.disclaimers {
+  border-top: 1px solid var(--border);
+  padding-top: 1.5rem;
+  margin-top: 2rem;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  line-height: 1.7;
+}
+.disclaimers a { color: var(--teal); }
+.disclaimers p { margin-bottom: 0.5rem; }
+
+/* ── Hidden state ── */
+#results-section { display: none; }
+#results-section.visible { display: block; }
+
+/* ── Loading ── */
+.loading-spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--border);
+  border-top-color: var(--teal);
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.price-status {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-top: 0.375rem;
+}
+.price-status.error { color: var(--red); }
+.price-status.success { color: var(--teal); }
+
+/* ── Tooltip ── */
+.tooltip {
+  position: absolute;
+  background: var(--header-bg);
+  color: var(--header-text);
+  font-size: 0.6875rem;
+  padding: 0.375rem 0.5rem;
+  border-radius: 3px;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 10;
+  box-shadow: var(--shadow-lg);
+  display: none;
+}
+
+/* ── Plan Config Collapse ── */
+.plan-config-toggle {
+  font-size: 0.75rem;
+  color: var(--teal);
+  cursor: pointer;
+  margin-bottom: 0.5rem;
+  display: inline-block;
+}
+.plan-config-toggle:hover { text-decoration: underline; }
+.plan-config-body.collapsed { display: none; }
+
+/* ── Mobile ── */
+@media (max-width: 768px) {
+  main { padding: 1rem 0.75rem; }
+  header { padding: 1.5rem 1rem 1rem; }
+  header h1 { font-size: 1.25rem; }
+  .input-row { flex-direction: column; gap: 0.5rem; }
+  .input-group.narrow { flex: 1; min-width: 100%; }
+  .metrics-row { grid-template-columns: 1fr 1fr; }
+  .slider-container { flex-direction: column; }
+  .slider-results { justify-content: space-around; width: 100%; }
+  .offerings-table { font-size: 0.75rem; }
+  .offerings-table input { width: 55px; }
+}
+</style>
+</head>
+<body>
+
+<!-- ── Header ── -->
+<header>
+  <h1>Section 423 ESPP Calculator</h1>
+  <p>Calculate your $25K IRS limit and decide whether to stay in or withdraw</p>
+  <div class="caveat">Educational tool only — not financial or tax advice. <a href="#disclaimers">Why?</a></div>
+</header>
+
+<main>
+
+<!-- ── Section 2: Inputs ── -->
+<section id="inputs-section">
+
+  <!-- Group A: Plan Config -->
+  <div class="card" style="margin-bottom: 1rem;">
+    <div class="section-title">Your Plan</div>
+    <span class="plan-config-toggle" id="plan-toggle" onclick="togglePlanConfig()">▼ Edit plan settings</span>
+    <div class="plan-config-body" id="plan-config-body">
+      <div class="input-row" style="margin-bottom: 0.75rem;">
+        <div class="input-group">
+          <label for="ticker">Ticker</label>
+          <div style="display: flex; gap: 0.5rem;">
+            <input type="text" id="ticker" value="MDB" placeholder="e.g. MDB" style="flex:1;">
+            <button class="btn btn-primary" id="fetch-btn" onclick="fetchPrices()">Fetch Prices</button>
+          </div>
+          <div class="price-status" id="price-status"></div>
+        </div>
+      </div>
+
+      <div style="font-size: 0.75rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.375rem; text-transform: uppercase; letter-spacing: 0.04em;">Offering Periods (annual pattern)</div>
+      <div class="input-row" style="margin-bottom: 0.75rem;">
+        <div class="input-group">
+          <label for="p1-start">Period 1 Start (MM-DD)</label>
+          <input type="text" id="p1-start" value="12-16" placeholder="MM-DD">
+        </div>
+        <div class="input-group">
+          <label for="p1-end">Period 1 End (MM-DD)</label>
+          <input type="text" id="p1-end" value="06-15" placeholder="MM-DD">
+        </div>
+        <div class="input-group">
+          <label for="p2-start">Period 2 Start (MM-DD)</label>
+          <input type="text" id="p2-start" value="06-16" placeholder="MM-DD">
+        </div>
+        <div class="input-group">
+          <label for="p2-end">Period 2 End (MM-DD)</label>
+          <input type="text" id="p2-end" value="12-15" placeholder="MM-DD">
+        </div>
+      </div>
+
+      <div class="input-row">
+        <div class="input-group narrow">
+          <label for="discount">Discount %</label>
+          <div class="input-suffix">
+            <input type="number" id="discount" value="15" min="0" max="50" step="1">
+          </div>
+        </div>
+        <div class="input-group narrow">
+          <label for="max-rate">Max Rate %</label>
+          <div class="input-suffix">
+            <input type="number" id="max-rate" value="15" min="1" max="100" step="1">
+          </div>
+        </div>
+        <div class="input-group narrow">
+          <label for="max-shares">Max Shares</label>
+          <input type="number" id="max-shares" value="2500" min="1">
+        </div>
+        <div class="input-group narrow">
+          <label for="lookback" style="display: flex; align-items: center; gap: 0.375rem; cursor: pointer;">
+            <input type="checkbox" id="lookback" checked> Lookback
+          </label>
+        </div>
+        <div class="input-group narrow">
+          <label for="years">Years</label>
+          <input type="number" id="years" value="2" min="1" max="5" step="1">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Group B: Your Details -->
+  <div class="card">
+    <div class="section-title">Your Details</div>
+    <div class="input-row" style="margin-bottom: 1rem;">
+      <div class="input-group">
+        <label for="salary">Annual Base Salary</label>
+        <div class="input-prefix">
+          <input type="number" id="salary" placeholder="150000" min="0" step="1000">
+        </div>
+      </div>
+    </div>
+
+    <div style="font-size: 0.75rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.375rem; text-transform: uppercase; letter-spacing: 0.04em;">Contribution History</div>
+    <div style="overflow-x: auto;">
+      <table class="offerings-table" id="offerings-table">
+        <thead>
+          <tr>
+            <th>Offering</th>
+            <th>Period</th>
+            <th>Start Price</th>
+            <th>Your Rate %</th>
+          </tr>
+        </thead>
+        <tbody id="offerings-body">
+          <!-- Populated by JS -->
+        </tbody>
+      </table>
+    </div>
+    <div style="font-size: 0.6875rem; color: var(--text-muted); margin-top: 0.5rem;">
+      Click any start price to override. Set rate to 0% for periods you weren't enrolled.
+    </div>
+  </div>
+</section>
+
+<!-- ── Section 3: Results Dashboard ── -->
+<section id="results-section">
+  <!-- 3a. Recommendation -->
+  <div class="recommendation green" id="recommendation">
+    <div class="rec-title" id="rec-title">Calculating...</div>
+    <div class="rec-body" id="rec-body"></div>
+    <div class="rec-link"><a href="#how-it-works">How does this work?</a></div>
+  </div>
+
+  <!-- 3b. Bucket Visualization -->
+  <div class="section-title">Calendar Year $25K Buckets</div>
+  <div class="bucket-chart" id="bucket-chart">
+    <!-- Populated by JS -->
+  </div>
+
+  <!-- 3c. Metric Cards -->
+  <div class="metrics-row" id="metrics-row">
+    <!-- Populated by JS -->
+  </div>
+
+  <!-- 3d. Price Slider -->
+  <div class="slider-section" id="slider-section">
+    <div class="slider-header">What if the stock price at purchase is...</div>
+    <div class="slider-container">
+      <div class="slider-wrap">
+        <input type="range" id="price-slider" min="0" max="100" value="50">
+        <div class="slider-labels">
+          <span id="slider-min-label">$0</span>
+          <span id="slider-max-label">$0</span>
+        </div>
+        <div class="slider-current-marker" id="slider-marker"></div>
+      </div>
+      <div class="slider-results" id="slider-results">
+        <!-- Populated by JS -->
+      </div>
+    </div>
+    <div class="slider-note" id="slider-note"></div>
+  </div>
+
+  <!-- 3e. LLM Prompt -->
+  <div class="prompt-section">
+    <button class="btn btn-lg btn-copy-prompt" id="copy-prompt-btn" onclick="copyPrompt()">
+      Copy prompt for AI discussion
+    </button>
+    <div class="prompt-hint">Paste into Claude, ChatGPT, Gemini, or your preferred AI</div>
+  </div>
+</section>
+
+<!-- ── Section 4: How It Works ── -->
+<section id="how-it-works">
+  <div class="section-title">How It Works</div>
+
+  <div class="accordion">
+    <button class="accordion-trigger" aria-expanded="false" onclick="toggleAccordion(this)">
+      The 15% Discount & Lookback
+    </button>
+    <div class="accordion-content">
+      <p>Most Section 423 ESPPs let you purchase company stock at a <strong>15% discount</strong> from the market price. If your plan has a <strong>lookback provision</strong>, you get the discount applied to the <em>lower</em> of the stock price at the offering start date or the purchase date.</p>
+      <div class="callout">
+        <strong>Example:</strong> If the stock was $100 at the start and $150 at purchase, your purchase price with lookback is 85% × $100 = <strong>$85</strong> (not 85% × $150 = $127.50). You're buying $150 stock for $85 — a 43% immediate gain.
+      </div>
+      <p>Without lookback, your purchase price is always 85% of the <em>end-of-period</em> price. The discount is still valuable, but lookback provides additional upside when the stock has risen.</p>
+    </div>
+  </div>
+
+  <div class="accordion">
+    <button class="accordion-trigger" aria-expanded="false" onclick="toggleAccordion(this)">
+      The $25K Annual Limit
+    </button>
+    <div class="accordion-content">
+      <p>The IRS limits Section 423 ESPP purchases to <strong>$25,000 of fair market value per calendar year</strong>. The critical detail: FMV is measured at the <em>offering start price</em>, not the discounted purchase price.</p>
+      <div class="callout">
+        <strong>Key insight:</strong> The limit is based on the stock price when the offering STARTED, not what you paid. A higher start price consumes your $25K capacity faster.
+      </div>
+      <p>This means the number of shares you can acquire depends on the start price:</p>
+<pre>High start price ($400):  $25,000 ÷ $400 = 62.5 shares max
+Low start price  ($150):  $25,000 ÷ $150 = 166.7 shares max</pre>
+      <p>If your contributions would purchase more than the limit allows, the excess is refunded to you.</p>
+    </div>
+  </div>
+
+  <div class="accordion">
+    <button class="accordion-trigger" aria-expanded="false" onclick="toggleAccordion(this)">
+      Cross-Year Offerings & the Ordering Rule
+    </button>
+    <div class="accordion-content">
+      <p>When an offering spans two calendar years (e.g., Dec 2025 → Jun 2026), it can draw from <strong>both years' $25K buckets</strong>. The <strong>ordering rule</strong> requires filling the earlier year's bucket first.</p>
+<pre>
+┌─── 2025 [$25K] ───┐    ┌─── 2026 [$25K] ───┐
+│                    │    │                    │
+│ ◄── Jun–Dec '25    │    │                    │
+│ ◄── Dec–Jun '25-26─┼──►│ ◄── overflow       │
+│                    │    │ ◄── Jun–Dec '26    │
+└────────────────────┘    └────────────────────┘</pre>
+      <p>This means a Dec→Jun offering shares capacity with the preceding Jun→Dec offering in the first year, and with the following Jun→Dec offering in the second year. Planning across offerings matters.</p>
+      <div class="callout">
+        <strong>Ordering rule:</strong> When a cross-year offering allocates FMV, it fills the <em>earliest</em> calendar year first. Only after that year's $25K is exhausted does overflow go to the next year.
+      </div>
+    </div>
+  </div>
+
+  <div class="accordion">
+    <button class="accordion-trigger" aria-expanded="false" onclick="toggleAccordion(this)">
+      The Always-Enroll Strategy
+    </button>
+    <div class="accordion-content">
+      <p>Most plans allow you to <strong>withdraw up to ~5 business days before the purchase date</strong>. This creates a useful strategy:</p>
+      <div class="callout">
+        <strong>Always enroll.</strong> Enrolling preserves your optionality — you can always withdraw later. Not enrolling forfeits the opportunity entirely.
+      </div>
+      <p>This calculator is most valuable <strong>~1 week before the purchase date</strong>, when you have the most information about whether to stay in or withdraw. By then you know the current stock price and can estimate your final purchase price.</p>
+      <p>If the stock has dropped below the offering start price and your plan has no lookback, withdrawing and re-enrolling in the next offering at the lower start price may be advantageous.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ── Section 5: Disclaimers ── -->
+<section class="disclaimers" id="disclaimers">
+  <p><strong>Disclaimer:</strong> This is an educational tool only. It does not constitute financial, tax, or investment advice. This tool is not affiliated with any employer, stock plan administrator, or financial institution.</p>
+  <p>IRS rules governing Section 423 ESPPs can change. Always verify calculations with your employer's stock plan administrator and consult a qualified tax professional for your specific situation.</p>
+  <p>Stock prices are sourced from Yahoo Finance and may not reflect the exact closing prices used by your plan administrator.</p>
+  <p><a href="https://www.law.cornell.edu/uscode/text/26/423" target="_blank" rel="noopener">IRS Section 423 — Employee Stock Purchase Plans</a></p>
+  <p style="margin-top: 0.75rem;">Built with care. Use at your own discretion.</p>
+</section>
+
+</main>
+
+<script>
+// ══════════════════════════════════════════════════════════════
+// Section 423 ESPP Calculator — Calculation Engine + UI
+// ══════════════════════════════════════════════════════════════
+
+// ── State ──
+let state = {
+  offerings: [],
+  priceData: null,  // {timestamps: [], closes: []}
+  buckets: {},      // {2024: {capacity: 25000, used: 0, allocations: []}, ...}
+};
+
+const OFFERING_COLORS = ['#0d9488', '#6366f1', '#0ea5e9', '#64748b', '#8b5cf6', '#06b6d4'];
+
+// ── URL Parameter Parsing ──
+function parseURLParams() {
+  const p = new URLSearchParams(window.location.search);
+  if (p.has('ticker'))     document.getElementById('ticker').value = p.get('ticker');
+  if (p.has('discount'))   document.getElementById('discount').value = p.get('discount');
+  if (p.has('max_rate'))   document.getElementById('max-rate').value = p.get('max_rate');
+  if (p.has('max_shares')) document.getElementById('max-shares').value = p.get('max_shares');
+  if (p.has('years'))      document.getElementById('years').value = p.get('years');
+  if (p.has('lookback'))   document.getElementById('lookback').checked = p.get('lookback') !== 'false';
+  if (p.has('salary'))     document.getElementById('salary').value = p.get('salary');
+
+  if (p.has('period1')) {
+    const [s, e] = p.get('period1').split(':');
+    if (s) document.getElementById('p1-start').value = s;
+    if (e) document.getElementById('p1-end').value = e;
+  }
+  if (p.has('period2')) {
+    const [s, e] = p.get('period2').split(':');
+    if (s) document.getElementById('p2-start').value = s;
+    if (e) document.getElementById('p2-end').value = e;
+  }
+
+  // Collapse plan config if key params are all pre-filled
+  const hasAllPlan = p.has('ticker') && p.has('period1') && p.has('period2');
+  if (hasAllPlan) {
+    document.getElementById('plan-config-body').classList.add('collapsed');
+    document.getElementById('plan-toggle').textContent = '▶ Edit plan settings';
+  }
+}
+
+// ── Offering Generation ──
+function parseMMDD(mmdd) {
+  const [m, d] = mmdd.split('-').map(Number);
+  return { month: m, day: d };
+}
+
+function makeDate(year, mmdd) {
+  const { month, day } = typeof mmdd === 'string' ? parseMMDD(mmdd) : mmdd;
+  return new Date(year, month - 1, day);
+}
+
+function generateOfferings(p1Start, p1End, p2Start, p2End, referenceDate, numYears) {
+  const ref = referenceDate || new Date();
+  const offerings = [];
+  const p1s = parseMMDD(p1Start);
+  const p1e = parseMMDD(p1End);
+  const p2s = parseMMDD(p2Start);
+  const p2e = parseMMDD(p2End);
+
+  // Determine if period1 is cross-year (start month > end month)
+  const p1CrossYear = p1s.month > p1e.month;
+  const p2CrossYear = p2s.month > p2e.month;
+
+  // Generate offerings for several years around reference date
+  const startYear = ref.getFullYear() - numYears;
+  const endYear = ref.getFullYear() + 1;
+
+  for (let y = startYear; y <= endYear; y++) {
+    // Period 1
+    const p1StartDate = makeDate(y, p1s);
+    const p1EndDate = makeDate(p1CrossYear ? y + 1 : y, p1e);
+    offerings.push({
+      start: p1StartDate,
+      end: p1EndDate,
+      type: p1CrossYear ? 'cross-year' : 'single-year',
+      label: formatOfferingLabel(p1StartDate, p1EndDate),
+      startPrice: null,
+      rate: 0,
+      colorIndex: null,
+    });
+
+    // Period 2
+    const p2StartDate = makeDate(y, p2s);
+    const p2EndDate = makeDate(p2CrossYear ? y + 1 : y, p2e);
+    offerings.push({
+      start: p2StartDate,
+      end: p2EndDate,
+      type: p2CrossYear ? 'cross-year' : 'single-year',
+      label: formatOfferingLabel(p2StartDate, p2EndDate),
+      startPrice: null,
+      rate: 0,
+      colorIndex: null,
+    });
+  }
+
+  // Sort chronologically by start date
+  offerings.sort((a, b) => a.start - b.start);
+
+  // Find the current offering (start <= today <= end)
+  const today = ref;
+  let currentIdx = -1;
+  for (let i = 0; i < offerings.length; i++) {
+    if (offerings[i].start <= today && offerings[i].end >= today) {
+      currentIdx = i;
+      break;
+    }
+  }
+
+  // If no current found, find the next upcoming
+  if (currentIdx === -1) {
+    for (let i = 0; i < offerings.length; i++) {
+      if (offerings[i].start > today) {
+        currentIdx = i;
+        break;
+      }
+    }
+  }
+
+  if (currentIdx === -1) currentIdx = offerings.length - 1;
+
+  // Keep current + N previous offerings (covering numYears of history)
+  const numOfferings = numYears * 2 + 1; // 2 per year + current
+  const startIdx = Math.max(0, currentIdx - numOfferings + 1);
+  const relevant = offerings.slice(startIdx, currentIdx + 1);
+
+  // Mark current
+  relevant.forEach((o, i) => {
+    o.isCurrent = (i === relevant.length - 1 && o.start <= today && o.end >= today);
+    o.colorIndex = i % OFFERING_COLORS.length;
+  });
+
+  return relevant;
+}
+
+function formatOfferingLabel(start, end) {
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const sy = start.getFullYear().toString().slice(2);
+  const ey = end.getFullYear().toString().slice(2);
+  return `${months[start.getMonth()]} '${sy} → ${months[end.getMonth()]} '${ey}`;
+}
+
+function formatDate(d) {
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  return `${months[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;
+}
+
+// ── Calendar Year Helpers ──
+function getCalendarYears(startDate, endDate) {
+  const sy = startDate.getFullYear();
+  const ey = endDate.getFullYear();
+  const years = [];
+  for (let y = sy; y <= ey; y++) years.push(y);
+  return years;
+}
+
+// ── Core Calculation Functions ──
+
+// FMV consumed: contribution buys shares at discounted price, each share costs startPrice of FMV
+// FMV = (contribution / purchasePrice) × startPrice
+// For limit-checking purposes, purchasePrice = startPrice × (1 - discount/100)
+// So FMV = contribution / (1 - discount/100)
+function calculateFMVUsage(contributionDollars, discountPct) {
+  if (contributionDollars <= 0) return 0;
+  return contributionDollars / (1 - discountPct / 100);
+}
+
+// Allocate FMV to calendar-year buckets (ordering rule: earliest year first)
+function allocateToBuckets(fmvUsed, calendarYears, buckets, limit) {
+  limit = limit || 25000;
+  const allocations = {};
+  let remaining = fmvUsed;
+
+  for (const year of calendarYears.sort((a, b) => a - b)) {
+    if (!buckets[year]) buckets[year] = { capacity: limit, used: 0, allocations: [] };
+    const available = Math.max(0, limit - buckets[year].used);
+    const alloc = Math.min(remaining, available);
+    allocations[year] = alloc;
+    remaining -= alloc;
+    if (remaining <= 0) break;
+  }
+
+  return { yearAllocations: allocations, excess: Math.max(0, remaining) };
+}
+
+// Max contribution before hitting IRS limit across relevant calendar years
+function calculateMaxContribution(buckets, calendarYears, discountPct, limit) {
+  limit = limit || 25000;
+  let totalAvailable = 0;
+  for (const year of calendarYears) {
+    const used = buckets[year] ? buckets[year].used : 0;
+    totalAvailable += Math.max(0, limit - used);
+  }
+  // FMV = contribution / (1 - discount/100), so contribution = FMV × (1 - discount/100)
+  return totalAvailable * (1 - discountPct / 100);
+}
+
+// Purchase price with optional lookback
+function calculatePurchasePrice(startPrice, endPrice, discountPct, hasLookback) {
+  const base = hasLookback ? Math.min(startPrice, endPrice) : endPrice;
+  return base * (1 - discountPct / 100);
+}
+
+// Project shares from contribution
+function projectShares(contributionDollars, purchasePrice) {
+  if (purchasePrice <= 0) return 0;
+  return contributionDollars / purchasePrice;
+}
+
+// Find binding constraint
+function findBindingConstraint(salary, rate, maxRate, maxShares, startPrice, fmvCapacity, discountPct) {
+  const halfYearSalary = salary * (rate / 100) * (6 / 12);
+  const irsMaxContrib = fmvCapacity * (1 - discountPct / 100);
+  const shareCapContrib = maxShares * startPrice * (1 - discountPct / 100);
+
+  const limits = [
+    { constraint: 'rate', maxContribution: halfYearSalary },
+    { constraint: 'irs_limit', maxContribution: irsMaxContrib },
+    { constraint: 'share_cap', maxContribution: shareCapContrib },
+  ];
+
+  limits.sort((a, b) => a.maxContribution - b.maxContribution);
+  return limits[0];
+}
+
+// ── Yahoo Finance Integration ──
+async function fetchPrices() {
+  const ticker = document.getElementById('ticker').value.trim().toUpperCase();
+  if (!ticker) return;
+
+  const statusEl = document.getElementById('price-status');
+  const fetchBtn = document.getElementById('fetch-btn');
+  statusEl.className = 'price-status';
+  statusEl.innerHTML = '<span class="loading-spinner"></span> Fetching prices...';
+  fetchBtn.disabled = true;
+
+  try {
+    const url = `https://api.allorigins.win/raw?url=${encodeURIComponent('https://query2.finance.yahoo.com/v8/finance/chart/' + ticker + '?range=2y&interval=1d')}`;
+    const resp = await fetch(url);
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const data = await resp.json();
+
+    const result = data.chart?.result?.[0];
+    if (!result) throw new Error('No data returned');
+
+    const timestamps = result.timestamp.map(t => new Date(t * 1000));
+    const closes = result.indicators.quote[0].close;
+
+    state.priceData = { timestamps, closes };
+    statusEl.className = 'price-status success';
+    statusEl.textContent = `Loaded ${closes.length} trading days for ${ticker}`;
+
+    // Update offering prices
+    populateOfferingPrices();
+    recalculate();
+  } catch (err) {
+    console.error('Price fetch error:', err);
+    statusEl.className = 'price-status error';
+    statusEl.textContent = `Failed to fetch prices: ${err.message}. Enter prices manually.`;
+    state.priceData = null;
+  } finally {
+    fetchBtn.disabled = false;
+  }
+}
+
+function findClosestPrice(targetDate) {
+  if (!state.priceData) return null;
+  const { timestamps, closes } = state.priceData;
+  let bestIdx = -1;
+  let bestDiff = Infinity;
+
+  for (let i = 0; i < timestamps.length; i++) {
+    if (closes[i] == null) continue;
+    const diff = Math.abs(timestamps[i] - targetDate);
+    // Only look at dates on or after target (nearest trading day)
+    // Actually, find closest overall within 7 days
+    if (diff < bestDiff && diff < 7 * 86400000) {
+      bestDiff = diff;
+      bestIdx = i;
+    }
+  }
+
+  return bestIdx >= 0 ? Math.round(closes[bestIdx] * 100) / 100 : null;
+}
+
+function populateOfferingPrices() {
+  state.offerings.forEach(o => {
+    const price = findClosestPrice(o.start);
+    if (price !== null) o.startPrice = price;
+  });
+  renderOfferingsTable();
+}
+
+// ── UI Rendering ──
+function renderOfferingsTable() {
+  const tbody = document.getElementById('offerings-body');
+  tbody.innerHTML = '';
+
+  state.offerings.forEach((o, idx) => {
+    const tr = document.createElement('tr');
+    if (o.isCurrent) tr.className = 'current-row';
+
+    const labelTd = document.createElement('td');
+    const labelText = o.isCurrent ? 'Current' :
+      idx === state.offerings.length - 2 ? 'Previous' :
+      `Past ${state.offerings.length - 1 - idx}`;
+    labelTd.innerHTML = labelText + (o.isCurrent ? '<span class="badge">now</span>' : '');
+
+    const periodTd = document.createElement('td');
+    periodTd.textContent = o.label;
+
+    const priceTd = document.createElement('td');
+    priceTd.className = 'price-cell';
+    const priceInput = document.createElement('input');
+    priceInput.type = 'number';
+    priceInput.step = '0.01';
+    priceInput.min = '0';
+    priceInput.value = o.startPrice || '';
+    priceInput.placeholder = '—';
+    priceInput.style.width = '80px';
+    priceInput.dataset.idx = idx;
+    priceInput.addEventListener('change', (e) => {
+      const val = parseFloat(e.target.value);
+      state.offerings[idx].startPrice = isNaN(val) ? null : val;
+      recalculate();
+    });
+    priceTd.appendChild(document.createTextNode('$'));
+    priceTd.appendChild(priceInput);
+
+    const rateTd = document.createElement('td');
+    const rateInput = document.createElement('input');
+    rateInput.type = 'number';
+    rateInput.min = '0';
+    rateInput.max = document.getElementById('max-rate').value;
+    rateInput.step = '1';
+    rateInput.value = o.rate || 0;
+    rateInput.dataset.idx = idx;
+    rateInput.addEventListener('change', (e) => {
+      state.offerings[idx].rate = Math.max(0, parseInt(e.target.value) || 0);
+      recalculate();
+    });
+    const rateSuffix = document.createElement('span');
+    rateSuffix.textContent = '%';
+    rateSuffix.style.cssText = 'font-size: 0.75rem; color: var(--text-muted); margin-left: 0.125rem;';
+    rateTd.appendChild(rateInput);
+    rateTd.appendChild(rateSuffix);
+
+    tr.appendChild(labelTd);
+    tr.appendChild(periodTd);
+    tr.appendChild(priceTd);
+    tr.appendChild(rateTd);
+    tbody.appendChild(tr);
+  });
+}
+
+function renderBucketChart(buckets) {
+  const container = document.getElementById('bucket-chart');
+  container.innerHTML = '';
+  const limit = 25000;
+
+  const years = Object.keys(buckets).sort();
+  years.forEach(year => {
+    const b = buckets[year];
+    const yearDiv = document.createElement('div');
+    yearDiv.className = 'bucket-year';
+
+    const remaining = Math.max(0, limit - b.used - (b.projected || 0));
+    const usedPct = (b.used / limit * 100).toFixed(1);
+    const projPct = ((b.projected || 0) / limit * 100).toFixed(1);
+
+    const labelDiv = document.createElement('div');
+    labelDiv.className = 'bucket-label';
+    labelDiv.innerHTML = `<span>${year}</span><span style="font-family: var(--mono); font-size: 0.75rem;">$${fmt(b.used)}${b.projected ? ' + ~$' + fmt(b.projected) + ' projected' : ''} used · $${fmt(remaining)} remaining</span>`;
+
+    const barTrack = document.createElement('div');
+    barTrack.className = 'bucket-bar-track';
+
+    // Render allocation segments
+    (b.allocations || []).forEach(alloc => {
+      if (alloc.amount <= 0) return;
+      const seg = document.createElement('div');
+      seg.className = 'bucket-segment' + (alloc.projected ? ' projected' : '');
+      seg.style.width = (alloc.amount / limit * 100) + '%';
+      seg.style.backgroundColor = OFFERING_COLORS[alloc.colorIndex % OFFERING_COLORS.length];
+      seg.title = `${alloc.label}: $${fmt(alloc.amount)}`;
+      if (alloc.amount / limit > 0.08) {
+        seg.textContent = '$' + fmt(alloc.amount);
+      }
+      barTrack.appendChild(seg);
+    });
+
+    yearDiv.appendChild(labelDiv);
+    yearDiv.appendChild(barTrack);
+
+    // Legend
+    const legend = document.createElement('div');
+    legend.className = 'bucket-legend';
+    (b.allocations || []).forEach(alloc => {
+      if (alloc.amount <= 0) return;
+      const item = document.createElement('span');
+      item.className = 'legend-item';
+      const swatch = document.createElement('span');
+      swatch.className = 'legend-swatch';
+      swatch.style.backgroundColor = OFFERING_COLORS[alloc.colorIndex % OFFERING_COLORS.length];
+      if (alloc.projected) {
+        swatch.style.backgroundImage = 'repeating-linear-gradient(-45deg, transparent, transparent 2px, rgba(255,255,255,0.4) 2px, rgba(255,255,255,0.4) 4px)';
+      }
+      item.appendChild(swatch);
+      item.appendChild(document.createTextNode(alloc.label + (alloc.projected ? ' (projected)' : '')));
+      legend.appendChild(item);
+    });
+    yearDiv.appendChild(legend);
+
+    container.appendChild(yearDiv);
+  });
+}
+
+function renderMetrics(currentOffering, salary, buckets, discountPct) {
+  const container = document.getElementById('metrics-row');
+  container.innerHTML = '';
+
+  if (!currentOffering || !currentOffering.startPrice || !salary) return;
+
+  const calYears = getCalendarYears(currentOffering.start, currentOffering.end);
+  let fmvCapacity = 0;
+  calYears.forEach(y => {
+    const used = buckets[y] ? buckets[y].used : 0;
+    fmvCapacity += Math.max(0, 25000 - used);
+  });
+
+  const maxContrib = fmvCapacity * (1 - discountPct / 100);
+  const halfSalary = salary * (currentOffering.rate / 100) * (6 / 12);
+  const projContrib = Math.min(halfSalary, maxContrib);
+  const projFMV = calculateFMVUsage(projContrib, discountPct);
+
+  // Find next offering
+  const currentIdx = state.offerings.indexOf(currentOffering);
+  const nextLabel = 'next period';
+
+  // Remaining after current
+  let postFMVCapacity = fmvCapacity - projFMV;
+  const yearLabel = calYears.join('/');
+
+  const metrics = [
+    { label: 'FMV Capacity Available', value: '$' + fmt(fmvCapacity), note: `Across ${yearLabel}` },
+    { label: 'Max Contribution', value: '$' + fmt(maxContrib), note: maxContrib < halfSalary ? 'IRS limit binds' : 'Plan limit binds' },
+    { label: 'Your Projected Contribution', value: '$' + fmt(projContrib), note: `${currentOffering.rate}% × $${fmt(salary)} × 6/12` },
+    { label: 'Projected FMV Usage', value: '$' + fmt(projFMV), note: `of $${fmt(fmvCapacity)} capacity` },
+    { label: 'Post-Period Capacity', value: '$' + fmt(Math.max(0, postFMVCapacity)), note: `Remaining for ${nextLabel}` },
+  ];
+
+  metrics.forEach(m => {
+    const card = document.createElement('div');
+    card.className = 'metric-card';
+    card.innerHTML = `
+      <div class="metric-label">${m.label}</div>
+      <div class="metric-value">${m.value}</div>
+      <div class="metric-note">${m.note}</div>
+    `;
+    container.appendChild(card);
+  });
+}
+
+function renderSlider(currentOffering, salary, discountPct, hasLookback) {
+  if (!currentOffering || !currentOffering.startPrice || !salary) return;
+
+  const startPrice = currentOffering.startPrice;
+  const minPrice = Math.round(startPrice * 0.5);
+  const maxPrice = Math.round(startPrice * 2);
+  const slider = document.getElementById('price-slider');
+  const oldMin = parseInt(slider.min);
+  const oldMax = parseInt(slider.max);
+  const rangeChanged = oldMin !== minPrice || oldMax !== maxPrice;
+  slider.min = minPrice;
+  slider.max = maxPrice;
+  slider.step = 1;
+  // Only reset slider position if range changed (new offering/price)
+  if (rangeChanged || !slider.dataset.initialized) {
+    slider.value = startPrice;
+    slider.dataset.initialized = '1';
+  }
+
+  document.getElementById('slider-min-label').textContent = '$' + minPrice;
+  document.getElementById('slider-max-label').textContent = '$' + maxPrice;
+
+  // Current market price marker (use most recent price from data)
+  let currentMarketPrice = startPrice;
+  if (state.priceData) {
+    const closes = state.priceData.closes;
+    for (let i = closes.length - 1; i >= 0; i--) {
+      if (closes[i] != null) { currentMarketPrice = Math.round(closes[i] * 100) / 100; break; }
+    }
+  }
+  document.getElementById('slider-marker').textContent = `Current: $${currentMarketPrice}`;
+
+  updateSliderResults();
+  slider.oninput = updateSliderResults;
+}
+
+function updateSliderResults() {
+  const currentOffering = state.offerings.find(o => o.isCurrent);
+  if (!currentOffering || !currentOffering.startPrice) return;
+
+  const salary = parseFloat(document.getElementById('salary').value) || 0;
+  const discountPct = parseFloat(document.getElementById('discount').value) || 15;
+  const hasLookback = document.getElementById('lookback').checked;
+  const startPrice = currentOffering.startPrice;
+  const endPrice = parseFloat(document.getElementById('price-slider').value);
+
+  const purchasePrice = calculatePurchasePrice(startPrice, endPrice, discountPct, hasLookback);
+  const contribution = salary * (currentOffering.rate / 100) * (6 / 12);
+  const shares = projectShares(contribution, purchasePrice);
+  const paperGain = (endPrice - purchasePrice) * shares;
+  const gainPct = contribution > 0 ? (paperGain / contribution * 100) : 0;
+
+  const lookbackKicked = hasLookback && startPrice < endPrice;
+
+  const container = document.getElementById('slider-results');
+  container.innerHTML = `
+    <div class="slider-stat">
+      <div class="stat-value">$${purchasePrice.toFixed(2)}</div>
+      <div class="stat-label">Purchase Price</div>
+    </div>
+    <div class="slider-stat">
+      <div class="stat-value">${shares.toFixed(1)}</div>
+      <div class="stat-label">Shares</div>
+    </div>
+    <div class="slider-stat">
+      <div class="stat-value" style="color: ${paperGain >= 0 ? 'var(--teal)' : 'var(--red)'}">$${fmt(Math.abs(paperGain))}</div>
+      <div class="stat-label">Paper ${paperGain >= 0 ? 'Gain' : 'Loss'}</div>
+    </div>
+    <div class="slider-stat">
+      <div class="stat-value" style="color: ${gainPct >= 0 ? 'var(--teal)' : 'var(--red)'}">${gainPct.toFixed(1)}%</div>
+      <div class="stat-label">Return</div>
+    </div>
+  `;
+
+  const noteEl = document.getElementById('slider-note');
+  if (lookbackKicked) {
+    noteEl.textContent = `Lookback applies — buying at ${discountPct}% off the start price ($${startPrice}) since it's lower than end price ($${endPrice})`;
+  } else if (hasLookback && endPrice <= startPrice) {
+    noteEl.textContent = `Buying at ${discountPct}% off end price ($${endPrice}) — it's lower than the start price ($${startPrice})`;
+  } else {
+    noteEl.textContent = '';
+  }
+}
+
+// ── Recommendation Logic ──
+function generateRecommendation(currentOffering, salary, buckets, discountPct) {
+  const recEl = document.getElementById('recommendation');
+  const titleEl = document.getElementById('rec-title');
+  const bodyEl = document.getElementById('rec-body');
+
+  if (!currentOffering || !salary || !currentOffering.startPrice) {
+    recEl.className = 'recommendation green';
+    titleEl.textContent = 'Enter your details above';
+    bodyEl.textContent = 'Fill in your salary and contribution rates to see your recommendation.';
+    return;
+  }
+
+  const calYears = getCalendarYears(currentOffering.start, currentOffering.end);
+  let fmvCapacity = 0;
+  calYears.forEach(y => {
+    fmvCapacity += Math.max(0, 25000 - (buckets[y] ? buckets[y].used : 0));
+  });
+
+  const halfContrib = salary * (currentOffering.rate / 100) * (6 / 12);
+  const projFMV = calculateFMVUsage(halfContrib, discountPct);
+  const maxContrib = fmvCapacity * (1 - discountPct / 100);
+  const maxEffectiveRate = salary > 0 ? Math.min(
+    parseFloat(document.getElementById('max-rate').value),
+    (maxContrib / (salary * 6 / 12)) * 100
+  ) : 0;
+
+  if (currentOffering.rate === 0) {
+    recEl.className = 'recommendation green';
+    titleEl.textContent = 'Not enrolled this period';
+    bodyEl.textContent = `You have $${fmt(fmvCapacity)} of FMV capacity available. If you enroll, your max effective rate would be ${maxEffectiveRate.toFixed(1)}%.`;
+    return;
+  }
+
+  const usagePct = fmvCapacity > 0 ? projFMV / fmvCapacity * 100 : 100;
+  const excess = projFMV - fmvCapacity;
+
+  // Check remaining capacity for next period
+  let remainingAfter = 0;
+  calYears.forEach(y => {
+    // This is simplified — in reality we'd need to check next offering's years too
+    remainingAfter += Math.max(0, 25000 - (buckets[y] ? buckets[y].used : 0)) ;
+  });
+  remainingAfter -= projFMV;
+
+  if (excess > 0) {
+    // Red — exceeds
+    recEl.className = 'recommendation red';
+    titleEl.textContent = 'Exceeds $25K limit';
+    const excessContrib = excess * (1 - discountPct / 100);
+    bodyEl.innerHTML = `At ${currentOffering.rate}%, you would exceed the $25K limit for ${calYears.join('/')}. Your max effective rate is <strong>${maxEffectiveRate.toFixed(1)}%</strong>. Excess contributions (~$${fmt(excessContrib)}) would be refunded.`;
+    if (fmvCapacity <= 0) {
+      bodyEl.innerHTML = `Your ${calYears.join('/')} capacity is fully consumed by prior offerings. Purchases this period would be refunded. <strong>Withdraw and re-enroll next period.</strong>`;
+    }
+  } else if (usagePct > 80 || remainingAfter < 5000) {
+    // Amber — near limits
+    recEl.className = 'recommendation amber';
+    titleEl.textContent = 'Near IRS limits';
+    const suggestedRate = Math.max(1, Math.floor(maxEffectiveRate * 0.7));
+    bodyEl.innerHTML = `At ${currentOffering.rate}%, you'll use $${fmt(projFMV)} of your $${fmt(fmvCapacity)} remaining capacity, leaving ~$${fmt(Math.max(0, remainingAfter))} for the next offering. Consider reducing to <strong>${suggestedRate}%</strong> to keep options open.`;
+  } else {
+    // Green — clear
+    recEl.className = 'recommendation green';
+    titleEl.textContent = 'Clear to participate';
+    bodyEl.innerHTML = `You have plenty of capacity. At ${currentOffering.rate}%, you'll use $${fmt(projFMV)} of $${fmt(fmvCapacity)} remaining for ${calYears.join('/')}. No issues.`;
+  }
+}
+
+// ── Main Recalculate ──
+function recalculate() {
+  const salary = parseFloat(document.getElementById('salary').value) || 0;
+  const discountPct = parseFloat(document.getElementById('discount').value) || 15;
+  const hasLookback = document.getElementById('lookback').checked;
+
+  if (state.offerings.length === 0) return;
+
+  // Read prices and rates from table inputs
+  state.offerings.forEach((o, i) => {
+    // The table has price input and rate input per row
+    const priceInput = document.querySelector(`#offerings-body input[data-idx="${i}"][type="number"][step="0.01"]`);
+    const rateInput = document.querySelector(`#offerings-body input[data-idx="${i}"][type="number"][step="1"]`);
+    if (priceInput) {
+      const val = parseFloat(priceInput.value);
+      if (!isNaN(val) && val > 0) o.startPrice = val;
+    }
+    if (rateInput) o.rate = parseInt(rateInput.value) || 0;
+  });
+
+  // Reset buckets
+  const buckets = {};
+  const currentOffering = state.offerings.find(o => o.isCurrent);
+
+  // Process all non-current offerings first (committed usage)
+  state.offerings.forEach(o => {
+    if (o.isCurrent || o.rate === 0 || !o.startPrice) return;
+
+    const calYears = getCalendarYears(o.start, o.end);
+    const halfContrib = salary * (o.rate / 100) * (6 / 12);
+    const fmvUsed = calculateFMVUsage(halfContrib, discountPct);
+
+    const result = allocateToBuckets(fmvUsed, calYears, buckets);
+
+    // Record allocations
+    for (const [year, amount] of Object.entries(result.yearAllocations)) {
+      if (!buckets[year]) buckets[year] = { capacity: 25000, used: 0, allocations: [] };
+      buckets[year].used += amount;
+      buckets[year].allocations.push({
+        label: o.label,
+        amount: amount,
+        colorIndex: o.colorIndex,
+        projected: false,
+      });
+    }
+  });
+
+  // Process current offering (projected)
+  if (currentOffering && currentOffering.rate > 0 && currentOffering.startPrice) {
+    const calYears = getCalendarYears(currentOffering.start, currentOffering.end);
+    const halfContrib = salary * (currentOffering.rate / 100) * (6 / 12);
+    const fmvUsed = calculateFMVUsage(halfContrib, discountPct);
+
+    // Ensure buckets exist for current offering's years
+    calYears.forEach(y => {
+      if (!buckets[y]) buckets[y] = { capacity: 25000, used: 0, allocations: [] };
+    });
+
+    const result = allocateToBuckets(fmvUsed, calYears, buckets);
+
+    for (const [year, amount] of Object.entries(result.yearAllocations)) {
+      buckets[year].allocations.push({
+        label: currentOffering.label,
+        amount: amount,
+        colorIndex: currentOffering.colorIndex,
+        projected: true,
+      });
+      buckets[year].projected = (buckets[year].projected || 0) + amount;
+    }
+  }
+
+  state.buckets = buckets;
+
+  // Show results
+  document.getElementById('results-section').classList.add('visible');
+
+  // Render everything
+  generateRecommendation(currentOffering, salary, buckets, discountPct);
+  renderBucketChart(buckets);
+  renderMetrics(currentOffering, salary, buckets, discountPct);
+  renderSlider(currentOffering, salary, discountPct, hasLookback);
+}
+
+// ── LLM Prompt Generator ──
+function generatePrompt() {
+  const ticker = document.getElementById('ticker').value.trim();
+  const discountPct = document.getElementById('discount').value;
+  const hasLookback = document.getElementById('lookback').checked;
+  const maxRate = document.getElementById('max-rate').value;
+  const maxShares = document.getElementById('max-shares').value;
+  const salary = document.getElementById('salary').value;
+  const currentOffering = state.offerings.find(o => o.isCurrent);
+  const p1 = document.getElementById('p1-start').value + ' to ' + document.getElementById('p1-end').value;
+  const p2 = document.getElementById('p2-start').value + ' to ' + document.getElementById('p2-end').value;
+
+  let offeringHistory = '';
+  state.offerings.forEach(o => {
+    const fmv = o.rate > 0 && salary ? calculateFMVUsage(salary * (o.rate / 100) * (6 / 12), parseFloat(discountPct)) : 0;
+    offeringHistory += `  - ${o.label}: start price $${o.startPrice || '?'}, rate ${o.rate}%${o.isCurrent ? ' (current)' : ''}, FMV consumed ~$${fmt(fmv)}\n`;
+  });
+
+  let bucketStatus = '';
+  const years = Object.keys(state.buckets).sort();
+  years.forEach(y => {
+    const b = state.buckets[y];
+    const total = b.used + (b.projected || 0);
+    const remaining = Math.max(0, 25000 - total);
+    bucketStatus += `  - ${y}: $${fmt(b.used)} committed${b.projected ? ' + ~$' + fmt(b.projected) + ' projected' : ''} = $${fmt(total)} used, $${fmt(remaining)} remaining\n`;
+  });
+
+  return `I need help analyzing my ESPP (Employee Stock Purchase Plan) situation.
+
+## How Section 423 ESPPs Work
+Under IRS Section 423, employees can purchase company stock at a discount (typically 15%) through payroll deductions. Key rules:
+
+1. **$25K Annual Limit**: The fair market value (FMV) of stock purchasable per calendar year is capped at $25,000, measured at the offering start price — not the discounted purchase price. FMV consumed = contribution ÷ (1 - discount%).
+
+2. **Lookback Provision**: If the plan has lookback, the purchase price is the discount applied to the LOWER of the start-of-offering price or end-of-offering price. This increases gains when the stock rises.
+
+3. **Cross-Year Offerings**: When an offering spans two calendar years (e.g., Dec→Jun), FMV can be allocated to both years' $25K buckets.
+
+4. **Ordering Rule**: For cross-year offerings, the earlier year's bucket must be filled first. Only after it's exhausted does overflow go to the later year. This means a Dec→Jun offering shares the first year's bucket with the preceding Jun→Dec offering.
+
+5. **Multiple Offering Rule**: If an employee is in overlapping or consecutive offerings, each offering independently counts against the relevant calendar year buckets.
+
+## My Plan Details
+- Stock: ${ticker}
+- Discount: ${discountPct}%, with lookback: ${hasLookback ? 'yes' : 'no'}
+- Max contribution rate: ${maxRate}% of base salary
+- Max shares per offering: ${maxShares}
+- Offering schedule: ${p1} and ${p2} each year (recurring)
+
+## My Situation
+- Annual base salary: $${salary || '?'}
+- Current offering: ${currentOffering ? formatDate(currentOffering.start) + ' to ' + formatDate(currentOffering.end) + ', start price $' + (currentOffering.startPrice || '?') : 'N/A'}
+- Contribution history:
+${offeringHistory}
+## Current $25K Bucket Status
+${bucketStatus}
+## My Question
+Given this situation, should I:
+1. Stay enrolled at ${currentOffering ? currentOffering.rate : '?'}%?
+2. Reduce my rate — and if so, to what?
+3. Withdraw from this offering entirely?
+
+Please analyze the trade-offs, considering:
+- Impact on this year's and next year's $25K capacity
+- The next offering period and whether I'd be blocked
+- Whether the current start price makes this offering more or less valuable
+- Any scenarios where withdrawing now and re-enrolling next period would be better`;
+}
+
+function copyPrompt() {
+  const prompt = generatePrompt();
+  navigator.clipboard.writeText(prompt).then(() => {
+    const btn = document.getElementById('copy-prompt-btn');
+    btn.textContent = 'Copied!';
+    setTimeout(() => { btn.textContent = 'Copy prompt for AI discussion'; }, 2000);
+  });
+}
+
+// ── UI Helpers ──
+function fmt(n) {
+  if (n == null || isNaN(n)) return '0';
+  return Math.round(n).toLocaleString();
+}
+
+function togglePlanConfig() {
+  const body = document.getElementById('plan-config-body');
+  const toggle = document.getElementById('plan-toggle');
+  body.classList.toggle('collapsed');
+  toggle.textContent = body.classList.contains('collapsed')
+    ? '▶ Edit plan settings'
+    : '▼ Edit plan settings';
+}
+
+function toggleAccordion(trigger) {
+  const content = trigger.nextElementSibling;
+  const expanded = trigger.getAttribute('aria-expanded') === 'true';
+  trigger.setAttribute('aria-expanded', !expanded);
+  content.classList.toggle('open');
+}
+
+// ── Input Change Listeners ──
+function setupListeners() {
+  const recalcFields = ['salary', 'discount', 'max-rate', 'max-shares', 'lookback', 'years'];
+  recalcFields.forEach(id => {
+    const el = document.getElementById(id);
+    el.addEventListener('change', () => {
+      if (id === 'years') {
+        rebuildOfferings();
+      }
+      recalculate();
+    });
+  });
+
+  // Also recalculate on salary input (real-time)
+  document.getElementById('salary').addEventListener('input', recalculate);
+
+  // Offering pattern changes → rebuild
+  ['p1-start', 'p1-end', 'p2-start', 'p2-end'].forEach(id => {
+    document.getElementById(id).addEventListener('change', () => {
+      rebuildOfferings();
+      if (state.priceData) populateOfferingPrices();
+      recalculate();
+    });
+  });
+}
+
+function rebuildOfferings() {
+  const numYears = parseInt(document.getElementById('years').value) || 2;
+  state.offerings = generateOfferings(
+    document.getElementById('p1-start').value,
+    document.getElementById('p1-end').value,
+    document.getElementById('p2-start').value,
+    document.getElementById('p2-end').value,
+    new Date(),
+    numYears
+  );
+  if (state.priceData) populateOfferingPrices();
+  renderOfferingsTable();
+}
+
+// ── Init ──
+function init() {
+  parseURLParams();
+  rebuildOfferings();
+  setupListeners();
+
+  // Auto-fetch if ticker is set
+  const ticker = document.getElementById('ticker').value.trim();
+  if (ticker) {
+    fetchPrices();
+  }
+}
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+
+</body>
+</html>
