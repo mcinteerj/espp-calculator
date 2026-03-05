@@ -158,7 +158,7 @@ input[type="checkbox"] { accent-color: var(--teal); }
   position: relative;
 }
 .input-prefix::before {
-  content: '$';
+  content: attr(data-prefix);
   position: absolute;
   left: 0.625rem;
   top: 50%;
@@ -588,13 +588,15 @@ input[type="range"]::-moz-range-thumb {
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-.price-status {
+.ticker-status {
   font-size: 0.75rem;
   color: var(--text-muted);
-  margin-top: 0.375rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
-.price-status.error { color: var(--red); }
-.price-status.success { color: var(--teal); }
+.ticker-status.error { color: var(--red); }
+.ticker-status.success { color: var(--teal); }
 
 /* ── Tooltip ── */
 .tooltip {
@@ -635,6 +637,83 @@ input[type="range"]::-moz-range-thumb {
   .offerings-table { font-size: 0.75rem; }
   .offerings-table input { width: 55px; }
 }
+
+/* ── Ticker Row ── */
+.ticker-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.ticker-row input[type="text"] { flex: 0 0 100px; }
+.ticker-row .btn { white-space: nowrap; padding: 0.5rem 0.75rem; }
+
+/* ── Derived Periods ── */
+.derived-periods {
+  font-size: 0.75rem;
+  font-family: var(--mono);
+  color: var(--text-muted);
+  margin-top: 0.25rem;
+  margin-bottom: 0.5rem;
+}
+
+/* ── Date Input ── */
+input[type="date"] {
+  font-family: var(--mono);
+  font-size: 0.875rem;
+  padding: 0.5rem 0.625rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--input-bg);
+  color: var(--text);
+  width: 100%;
+  transition: border-color 0.15s;
+}
+input[type="date"]:focus {
+  outline: none;
+  border-color: var(--teal);
+}
+
+/* ── Copy Buttons ── */
+.copy-buttons {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+  margin-top: 0.75rem;
+}
+
+/* ── Toast ── */
+.toast {
+  position: fixed;
+  bottom: 1.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--header-bg);
+  color: var(--header-text);
+  font-size: 0.8125rem;
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-lg);
+  z-index: 100;
+  opacity: 0;
+  transition: opacity 0.2s;
+  pointer-events: none;
+}
+.toast.visible { opacity: 1; }
+
+/* ── Empty State Hint ── */
+.empty-hint {
+  text-align: center;
+  padding: 2rem 1rem;
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  line-height: 1.6;
+}
+.empty-hint-icon {
+  font-size: 1.5rem;
+  margin-bottom: 0.25rem;
+  opacity: 0.5;
+}
+.empty-hint.hidden { display: none; }
 </style>
 </head>
 <body>
@@ -657,35 +736,29 @@ input[type="range"]::-moz-range-thumb {
     <span class="plan-config-toggle" id="plan-toggle" onclick="togglePlanConfig()">▼ Edit plan settings</span>
     <div class="plan-config-body" id="plan-config-body">
       <div class="input-row" style="margin-bottom: 0.75rem;">
-        <div class="input-group">
+        <div class="input-group" style="flex: 0 0 auto;">
           <label for="ticker">Ticker</label>
-          <div style="display: flex; gap: 0.5rem;">
-            <input type="text" id="ticker" value="MDB" placeholder="e.g. MDB" style="flex:1;">
-            <button class="btn btn-primary" id="fetch-btn" onclick="fetchPrices()">Fetch Prices</button>
+          <div class="ticker-row">
+            <input type="text" id="ticker" value="MDB" placeholder="e.g. MDB">
+            <button class="btn btn-primary" id="fetch-btn" onclick="fetchPrices()">Fetch</button>
+            <span class="ticker-status" id="price-status"></span>
           </div>
-          <div class="price-status" id="price-status"></div>
         </div>
       </div>
 
-      <div style="font-size: 0.75rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.375rem; text-transform: uppercase; letter-spacing: 0.04em;">Offering Periods (annual pattern)</div>
-      <div class="input-row" style="margin-bottom: 0.75rem;">
-        <div class="input-group">
-          <label for="p1-start">Period 1 Start (MM-DD)</label>
-          <input type="text" id="p1-start" value="12-16" placeholder="MM-DD">
-        </div>
-        <div class="input-group">
-          <label for="p1-end">Period 1 End (MM-DD)</label>
-          <input type="text" id="p1-end" value="06-15" placeholder="MM-DD">
-        </div>
-        <div class="input-group">
-          <label for="p2-start">Period 2 Start (MM-DD)</label>
-          <input type="text" id="p2-start" value="06-16" placeholder="MM-DD">
-        </div>
-        <div class="input-group">
-          <label for="p2-end">Period 2 End (MM-DD)</label>
-          <input type="text" id="p2-end" value="12-15" placeholder="MM-DD">
+      <div style="font-size: 0.75rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.375rem; text-transform: uppercase; letter-spacing: 0.04em;">Offering Periods</div>
+      <div class="input-row" style="margin-bottom: 0.25rem;">
+        <div class="input-group" style="flex: 0 0 200px;">
+          <label for="period-start">Period 1 Start Date</label>
+          <input type="date" id="period-start" value="2025-12-16">
         </div>
       </div>
+      <div class="derived-periods" id="derived-periods"></div>
+      <div style="font-size: 0.6875rem; color: var(--text-muted); margin-bottom: 0.5rem;">Your plan alternates between these two 6-month offering windows each year.</div>
+      <input type="hidden" id="p1-start" value="12-16">
+      <input type="hidden" id="p1-end" value="06-15">
+      <input type="hidden" id="p2-start" value="06-16">
+      <input type="hidden" id="p2-end" value="12-15">
 
       <div class="input-row">
         <div class="input-group narrow">
@@ -723,9 +796,20 @@ input[type="range"]::-moz-range-thumb {
     <div class="input-row" style="margin-bottom: 1rem;">
       <div class="input-group">
         <label for="salary">Annual Base Salary</label>
-        <div class="input-prefix">
+        <div class="input-prefix" data-prefix="$">
           <input type="number" id="salary" placeholder="150000" min="0" step="1000">
         </div>
+      </div>
+      <div class="input-group narrow">
+        <label for="currency">Currency</label>
+        <select id="currency">
+          <option value="USD">USD ($)</option>
+          <option value="NZD">NZD (NZ$)</option>
+          <option value="AUD">AUD (A$)</option>
+          <option value="GBP">GBP (&pound;)</option>
+          <option value="EUR">EUR (&euro;)</option>
+          <option value="CAD">CAD (C$)</option>
+        </select>
       </div>
     </div>
 
@@ -750,6 +834,12 @@ input[type="range"]::-moz-range-thumb {
     </div>
   </div>
 </section>
+
+<!-- ── Empty State Hint ── -->
+<div id="empty-hint" class="empty-hint">
+  <div class="empty-hint-icon">&#8593;</div>
+  <div>Enter your salary above to see your $25K limit analysis</div>
+</div>
 
 <!-- ── Section 3: Results Dashboard ── -->
 <section id="results-section">
@@ -796,6 +886,10 @@ input[type="range"]::-moz-range-thumb {
       Copy prompt for AI discussion
     </button>
     <div class="prompt-hint">Paste into Claude, ChatGPT, Gemini, or your preferred AI</div>
+    <div class="copy-buttons">
+      <button class="btn btn-secondary" onclick="copyShareableLink()">Copy plan link</button>
+      <button class="btn btn-secondary" onclick="copyFullLink()">Copy full link (with my data)</button>
+    </div>
   </div>
 </section>
 
@@ -886,11 +980,85 @@ Low start price  ($150):  $25,000 ÷ $150 = 166.7 shares max</pre>
 // ── State ──
 let state = {
   offerings: [],
-  priceData: null,  // {timestamps: [], closes: []}
-  buckets: {},      // {2024: {capacity: 25000, used: 0, allocations: []}, ...}
+  priceData: null,
+  buckets: {},
+  periodConfig: { p1Start: '12-16', p1End: '06-15', p2Start: '06-16', p2End: '12-15' },
+  currency: 'USD',
+  fxRate: 1,
+  fxData: null,
 };
 
 const OFFERING_COLORS = ['#0d9488', '#6366f1', '#0ea5e9', '#64748b', '#8b5cf6', '#06b6d4'];
+
+const CURRENCY_MAP = {
+  USD: { symbol: '$', pair: null },
+  NZD: { symbol: 'NZ$', pair: 'NZDUSD=X' },
+  AUD: { symbol: 'A$', pair: 'AUDUSD=X' },
+  GBP: { symbol: '\u00a3', pair: 'GBPUSD=X' },
+  EUR: { symbol: '\u20ac', pair: 'EURUSD=X' },
+  CAD: { symbol: 'C$', pair: 'CADUSD=X' },
+};
+
+function toUSD(localAmount, fxRate) {
+  return state.currency === 'USD' ? localAmount : localAmount / (fxRate || state.fxRate);
+}
+
+// ── Period Derivation ──
+function derivePeriods(dateStr) {
+  const d = new Date(dateStr + 'T12:00:00');
+  const p1StartMM = String(d.getMonth() + 1).padStart(2, '0');
+  const p1StartDD = String(d.getDate()).padStart(2, '0');
+  const p1Start = `${p1StartMM}-${p1StartDD}`;
+
+  const p1EndDate = new Date(d);
+  p1EndDate.setMonth(p1EndDate.getMonth() + 6);
+  p1EndDate.setDate(p1EndDate.getDate() - 1);
+  const p1End = `${String(p1EndDate.getMonth() + 1).padStart(2, '0')}-${String(p1EndDate.getDate()).padStart(2, '0')}`;
+
+  const p2StartDate = new Date(p1EndDate);
+  p2StartDate.setDate(p2StartDate.getDate() + 1);
+  const p2Start = `${String(p2StartDate.getMonth() + 1).padStart(2, '0')}-${String(p2StartDate.getDate()).padStart(2, '0')}`;
+
+  const p2EndDate = new Date(d);
+  p2EndDate.setDate(p2EndDate.getDate() - 1);
+  const p2End = `${String(p2EndDate.getMonth() + 1).padStart(2, '0')}-${String(p2EndDate.getDate()).padStart(2, '0')}`;
+
+  return { p1Start, p1End, p2Start, p2End };
+}
+
+function updateDerivedPeriods() {
+  const dateStr = document.getElementById('period-start').value;
+  if (!dateStr) return;
+
+  const config = derivePeriods(dateStr);
+  state.periodConfig = config;
+
+  document.getElementById('p1-start').value = config.p1Start;
+  document.getElementById('p1-end').value = config.p1End;
+  document.getElementById('p2-start').value = config.p2Start;
+  document.getElementById('p2-end').value = config.p2End;
+
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const fmtPeriod = (mmdd) => {
+    const [m, d] = mmdd.split('-').map(Number);
+    return `${d} ${months[m - 1]}`;
+  };
+  document.getElementById('derived-periods').textContent =
+    `P1: ${fmtPeriod(config.p1Start)} \u2013 ${fmtPeriod(config.p1End)}  \u00b7  P2: ${fmtPeriod(config.p2Start)} \u2013 ${fmtPeriod(config.p2End)}`;
+}
+
+function updateCurrencySymbol() {
+  const currency = document.getElementById('currency').value;
+  state.currency = currency;
+  const symbol = CURRENCY_MAP[currency]?.symbol || '$';
+  document.querySelectorAll('.input-prefix').forEach(el => {
+    el.setAttribute('data-prefix', symbol);
+    const input = el.querySelector('input');
+    if (input) {
+      input.style.paddingLeft = (0.625 + symbol.length * 0.55) + 'rem';
+    }
+  });
+}
 
 // ── URL Parameter Parsing ──
 function parseURLParams() {
@@ -903,22 +1071,48 @@ function parseURLParams() {
   if (p.has('lookback'))   document.getElementById('lookback').checked = p.get('lookback') !== 'false';
   if (p.has('salary'))     document.getElementById('salary').value = p.get('salary');
 
-  if (p.has('period1')) {
+  if (p.has('currency')) {
+    document.getElementById('currency').value = p.get('currency');
+    state.currency = p.get('currency');
+    updateCurrencySymbol();
+  }
+
+  // New: single date param for period pattern
+  if (p.has('next_start')) {
+    document.getElementById('period-start').value = p.get('next_start');
+    updateDerivedPeriods();
+  }
+  // Legacy: period1/period2 params
+  else if (p.has('period1')) {
     const [s, e] = p.get('period1').split(':');
     if (s) document.getElementById('p1-start').value = s;
     if (e) document.getElementById('p1-end').value = e;
-  }
-  if (p.has('period2')) {
-    const [s, e] = p.get('period2').split(':');
-    if (s) document.getElementById('p2-start').value = s;
-    if (e) document.getElementById('p2-end').value = e;
+    if (p.has('period2')) {
+      const [s2, e2] = p.get('period2').split(':');
+      if (s2) document.getElementById('p2-start').value = s2;
+      if (e2) document.getElementById('p2-end').value = e2;
+    }
+    // Infer date picker from p1-start
+    if (s) {
+      const [mm, dd] = s.split('-');
+      const year = new Date().getFullYear();
+      document.getElementById('period-start').value = `${year}-${mm}-${dd}`;
+    }
+    state.periodConfig = {
+      p1Start: document.getElementById('p1-start').value,
+      p1End: document.getElementById('p1-end').value,
+      p2Start: document.getElementById('p2-start').value,
+      p2End: document.getElementById('p2-end').value,
+    };
+  } else {
+    updateDerivedPeriods();
   }
 
-  // Collapse plan config if key params are all pre-filled
-  const hasAllPlan = p.has('ticker') && p.has('period1') && p.has('period2');
+  // Collapse plan config if key params are pre-filled
+  const hasAllPlan = p.has('ticker') && (p.has('next_start') || p.has('period1'));
   if (hasAllPlan) {
     document.getElementById('plan-config-body').classList.add('collapsed');
-    document.getElementById('plan-toggle').textContent = '▶ Edit plan settings';
+    document.getElementById('plan-toggle').textContent = '\u25B6 Edit plan settings';
   }
 }
 
@@ -933,7 +1127,7 @@ function makeDate(year, mmdd) {
   return new Date(year, month - 1, day);
 }
 
-function generateOfferings(p1Start, p1End, p2Start, p2End, referenceDate, numYears) {
+function generateOfferings(p1Start, p1End, p2Start, p2End, referenceDate, numYears, defaultRate) {
   const ref = referenceDate || new Date();
   const offerings = [];
   const p1s = parseMMDD(p1Start);
@@ -959,7 +1153,8 @@ function generateOfferings(p1Start, p1End, p2Start, p2End, referenceDate, numYea
       type: p1CrossYear ? 'cross-year' : 'single-year',
       label: formatOfferingLabel(p1StartDate, p1EndDate),
       startPrice: null,
-      rate: 0,
+      rate: defaultRate || 0,
+      fxRate: 1,
       colorIndex: null,
     });
 
@@ -972,7 +1167,8 @@ function generateOfferings(p1Start, p1End, p2Start, p2End, referenceDate, numYea
       type: p2CrossYear ? 'cross-year' : 'single-year',
       label: formatOfferingLabel(p2StartDate, p2EndDate),
       startPrice: null,
-      rate: 0,
+      rate: defaultRate || 0,
+      fxRate: 1,
       colorIndex: null,
     });
   }
@@ -1020,7 +1216,7 @@ function formatOfferingLabel(start, end) {
   const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   const sy = start.getFullYear().toString().slice(2);
   const ey = end.getFullYear().toString().slice(2);
-  return `${months[start.getMonth()]} '${sy} → ${months[end.getMonth()]} '${ey}`;
+  return `${start.getDate()} ${months[start.getMonth()]} '${sy} \u2013 ${end.getDate()} ${months[end.getMonth()]} '${ey}`;
 }
 
 function formatDate(d) {
@@ -1113,8 +1309,8 @@ async function fetchPrices() {
 
   const statusEl = document.getElementById('price-status');
   const fetchBtn = document.getElementById('fetch-btn');
-  statusEl.className = 'price-status';
-  statusEl.innerHTML = '<span class="loading-spinner"></span> Fetching prices...';
+  statusEl.className = 'ticker-status';
+  statusEl.innerHTML = '<span class="loading-spinner"></span> Fetching...';
   fetchBtn.disabled = true;
 
   try {
@@ -1130,16 +1326,16 @@ async function fetchPrices() {
     const closes = result.indicators.quote[0].close;
 
     state.priceData = { timestamps, closes };
-    statusEl.className = 'price-status success';
-    statusEl.textContent = `Loaded ${closes.length} trading days for ${ticker}`;
+    statusEl.className = 'ticker-status success';
+    statusEl.textContent = `${closes.length} days loaded`;
 
     // Update offering prices
     populateOfferingPrices();
     recalculate();
   } catch (err) {
     console.error('Price fetch error:', err);
-    statusEl.className = 'price-status error';
-    statusEl.textContent = `Failed to fetch prices: ${err.message}. Enter prices manually.`;
+    statusEl.className = 'ticker-status error';
+    statusEl.textContent = `Failed: ${err.message}`;
     state.priceData = null;
   } finally {
     fetchBtn.disabled = false;
@@ -1174,10 +1370,88 @@ function populateOfferingPrices() {
   renderOfferingsTable();
 }
 
+// ── FX Rate Integration ──
+async function fetchFXRate() {
+  const currency = document.getElementById('currency').value;
+  if (currency === 'USD') {
+    state.fxRate = 1;
+    state.fxData = null;
+    return;
+  }
+
+  const pair = CURRENCY_MAP[currency]?.pair;
+  if (!pair) return;
+
+  try {
+    const url = `https://api.allorigins.win/raw?url=${encodeURIComponent('https://query2.finance.yahoo.com/v8/finance/chart/' + pair + '?range=2y&interval=1d')}`;
+    const resp = await fetch(url);
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const data = await resp.json();
+
+    const result = data.chart?.result?.[0];
+    if (!result) throw new Error('No FX data returned');
+
+    const timestamps = result.timestamp.map(t => new Date(t * 1000));
+    const closes = result.indicators.quote[0].close;
+    state.fxData = { timestamps, closes };
+
+    for (let i = closes.length - 1; i >= 0; i--) {
+      if (closes[i] != null && closes[i] > 0) {
+        state.fxRate = 1 / closes[i];
+        break;
+      }
+    }
+
+    populateOfferingFXRates();
+  } catch (err) {
+    console.error('FX fetch error:', err);
+    state.fxRate = 1;
+    state.fxData = null;
+    showToast('FX rate fetch failed \u2014 enter rates manually in the table');
+  }
+}
+
+
+function findClosestFXRate(targetDate) {
+  if (!state.fxData) return state.fxRate;
+  const { timestamps, closes } = state.fxData;
+  let bestIdx = -1;
+  let bestDiff = Infinity;
+
+  for (let i = 0; i < timestamps.length; i++) {
+    if (closes[i] == null) continue;
+    const diff = Math.abs(timestamps[i] - targetDate);
+    if (diff < bestDiff && diff < 7 * 86400000) {
+      bestDiff = diff;
+      bestIdx = i;
+    }
+  }
+
+  return bestIdx >= 0 ? 1 / closes[bestIdx] : state.fxRate;
+}
+
+function populateOfferingFXRates() {
+  state.offerings.forEach(o => {
+    o.fxRate = findClosestFXRate(o.start);
+  });
+  renderOfferingsTable();
+}
+
 // ── UI Rendering ──
 function renderOfferingsTable() {
   const tbody = document.getElementById('offerings-body');
+  const thead = document.querySelector('#offerings-table thead tr');
   tbody.innerHTML = '';
+
+  const isNonUSD = state.currency !== 'USD';
+
+  thead.innerHTML = `
+    <th>Offering</th>
+    <th>Period</th>
+    <th>Start Price</th>
+    ${isNonUSD ? '<th>FX Rate</th>' : ''}
+    <th>Your Rate %</th>
+  `;
 
   state.offerings.forEach((o, idx) => {
     const tr = document.createElement('tr');
@@ -1199,7 +1473,7 @@ function renderOfferingsTable() {
     priceInput.step = '0.01';
     priceInput.min = '0';
     priceInput.value = o.startPrice || '';
-    priceInput.placeholder = '—';
+    priceInput.placeholder = '\u2014';
     priceInput.style.width = '80px';
     priceInput.dataset.idx = idx;
     priceInput.addEventListener('change', (e) => {
@@ -1209,6 +1483,28 @@ function renderOfferingsTable() {
     });
     priceTd.appendChild(document.createTextNode('$'));
     priceTd.appendChild(priceInput);
+
+    tr.appendChild(labelTd);
+    tr.appendChild(periodTd);
+    tr.appendChild(priceTd);
+
+    if (isNonUSD) {
+      const fxTd = document.createElement('td');
+      const fxInput = document.createElement('input');
+      fxInput.type = 'number';
+      fxInput.step = '0.0001';
+      fxInput.min = '0';
+      fxInput.value = (o.fxRate || state.fxRate).toFixed(4);
+      fxInput.style.width = '80px';
+      fxInput.dataset.idx = idx;
+      fxInput.addEventListener('change', (e) => {
+        const val = parseFloat(e.target.value);
+        if (!isNaN(val) && val > 0) state.offerings[idx].fxRate = val;
+        recalculate();
+      });
+      fxTd.appendChild(fxInput);
+      tr.appendChild(fxTd);
+    }
 
     const rateTd = document.createElement('td');
     const rateInput = document.createElement('input');
@@ -1228,9 +1524,6 @@ function renderOfferingsTable() {
     rateTd.appendChild(rateInput);
     rateTd.appendChild(rateSuffix);
 
-    tr.appendChild(labelTd);
-    tr.appendChild(periodTd);
-    tr.appendChild(priceTd);
     tr.appendChild(rateTd);
     tbody.appendChild(tr);
   });
@@ -1298,7 +1591,7 @@ function renderBucketChart(buckets) {
   });
 }
 
-function renderMetrics(currentOffering, salary, buckets, discountPct) {
+function renderMetrics(currentOffering, salary, buckets, discountPct, nextInfo) {
   const container = document.getElementById('metrics-row');
   container.innerHTML = '';
 
@@ -1312,24 +1605,26 @@ function renderMetrics(currentOffering, salary, buckets, discountPct) {
   });
 
   const maxContrib = fmvCapacity * (1 - discountPct / 100);
-  const halfSalary = salary * (currentOffering.rate / 100) * (6 / 12);
-  const projContrib = Math.min(halfSalary, maxContrib);
+  const halfSalaryUSD = toUSD(salary * (currentOffering.rate / 100) * (6 / 12), currentOffering.fxRate);
+  const projContrib = Math.min(halfSalaryUSD, maxContrib);
   const projFMV = calculateFMVUsage(projContrib, discountPct);
-
-  // Find next offering
-  const currentIdx = state.offerings.indexOf(currentOffering);
-  const nextLabel = 'next period';
-
-  // Remaining after current
-  let postFMVCapacity = fmvCapacity - projFMV;
   const yearLabel = calYears.join('/');
+
+  // Next period calculations
+  const nextFMV = nextInfo ? nextInfo.fmvCapacity : 0;
+  const nextMaxContrib = nextFMV * (1 - discountPct / 100);
+  const salaryUSD = toUSD(salary, currentOffering.fxRate);
+  const maxRate = parseFloat(document.getElementById('max-rate').value);
+  const nextMaxRate = salaryUSD > 0 ? Math.min(maxRate, (nextMaxContrib / (salaryUSD * 6 / 12)) * 100) : 0;
+  const nextConstrained = nextMaxRate < currentOffering.rate;
 
   const metrics = [
     { label: 'FMV Capacity Available', value: '$' + fmt(fmvCapacity), note: `Across ${yearLabel}` },
-    { label: 'Max Contribution', value: '$' + fmt(maxContrib), note: maxContrib < halfSalary ? 'IRS limit binds' : 'Plan limit binds' },
-    { label: 'Your Projected Contribution', value: '$' + fmt(projContrib), note: `${currentOffering.rate}% × $${fmt(salary)} × 6/12` },
+    { label: 'Max Contribution', value: '$' + fmt(maxContrib), note: maxContrib < halfSalaryUSD ? 'IRS limit binds' : 'Plan limit binds' },
+    { label: 'Your Projected Contribution', value: '$' + fmt(projContrib), note: `${currentOffering.rate}% × ${CURRENCY_MAP[state.currency]?.symbol || '$'}${fmt(salary)} × 6/12${state.currency !== 'USD' ? ' (USD)' : ''}` },
     { label: 'Projected FMV Usage', value: '$' + fmt(projFMV), note: `of $${fmt(fmvCapacity)} capacity` },
-    { label: 'Post-Period Capacity', value: '$' + fmt(Math.max(0, postFMVCapacity)), note: `Remaining for ${nextLabel}` },
+    { label: 'Next Period Capacity', value: '$' + fmt(nextFMV), note: nextInfo ? nextInfo.label : '' },
+    { label: 'Next Period Max Rate', value: nextMaxRate.toFixed(1) + '%', note: nextConstrained ? `Down from ${currentOffering.rate}% \u2014 constrained` : 'No constraint' },
   ];
 
   metrics.forEach(m => {
@@ -1391,7 +1686,7 @@ function updateSliderResults() {
   const endPrice = parseFloat(document.getElementById('price-slider').value);
 
   const purchasePrice = calculatePurchasePrice(startPrice, endPrice, discountPct, hasLookback);
-  const contribution = salary * (currentOffering.rate / 100) * (6 / 12);
+  const contribution = toUSD(salary * (currentOffering.rate / 100) * (6 / 12), currentOffering.fxRate);
   const shares = projectShares(contribution, purchasePrice);
   const paperGain = (endPrice - purchasePrice) * shares;
   const gainPct = contribution > 0 ? (paperGain / contribution * 100) : 0;
@@ -1421,7 +1716,7 @@ function updateSliderResults() {
   const noteEl = document.getElementById('slider-note');
   if (lookbackKicked) {
     noteEl.textContent = `Lookback applies — buying at ${discountPct}% off the start price ($${startPrice}) since it's lower than end price ($${endPrice})`;
-  } else if (hasLookback && endPrice <= startPrice) {
+  } else if (hasLookback && endPrice < startPrice) {
     noteEl.textContent = `Buying at ${discountPct}% off end price ($${endPrice}) — it's lower than the start price ($${startPrice})`;
   } else {
     noteEl.textContent = '';
@@ -1429,7 +1724,7 @@ function updateSliderResults() {
 }
 
 // ── Recommendation Logic ──
-function generateRecommendation(currentOffering, salary, buckets, discountPct) {
+function generateRecommendation(currentOffering, salary, buckets, discountPct, nextInfo) {
   const recEl = document.getElementById('recommendation');
   const titleEl = document.getElementById('rec-title');
   const bodyEl = document.getElementById('rec-body');
@@ -1447,13 +1742,20 @@ function generateRecommendation(currentOffering, salary, buckets, discountPct) {
     fmvCapacity += Math.max(0, 25000 - (buckets[y] ? buckets[y].used : 0));
   });
 
-  const halfContrib = salary * (currentOffering.rate / 100) * (6 / 12);
+  const halfContrib = toUSD(salary * (currentOffering.rate / 100) * (6 / 12), currentOffering.fxRate);
   const projFMV = calculateFMVUsage(halfContrib, discountPct);
   const maxContrib = fmvCapacity * (1 - discountPct / 100);
-  const maxEffectiveRate = salary > 0 ? Math.min(
-    parseFloat(document.getElementById('max-rate').value),
-    (maxContrib / (salary * 6 / 12)) * 100
-  ) : 0;
+  const salaryUSD = toUSD(salary, currentOffering.fxRate);
+  const maxRate = parseFloat(document.getElementById('max-rate').value);
+  const maxEffectiveRate = salaryUSD > 0 ? Math.min(maxRate, (maxContrib / (salaryUSD * 6 / 12)) * 100) : 0;
+
+  // Next period constraint analysis
+  const nextFMV = nextInfo ? nextInfo.fmvCapacity : 0;
+  const nextMaxContrib = nextFMV * (1 - discountPct / 100);
+  const nextMaxRate = salaryUSD > 0 ? Math.min(maxRate, (nextMaxContrib / (salaryUSD * 6 / 12)) * 100) : 0;
+  const nextConstrained = nextMaxRate < currentOffering.rate;
+  const nextBlocked = nextFMV <= 0;
+  const nextSevere = nextMaxRate < currentOffering.rate * 0.5;
 
   if (currentOffering.rate === 0) {
     recEl.className = 'recommendation green';
@@ -1465,16 +1767,7 @@ function generateRecommendation(currentOffering, salary, buckets, discountPct) {
   const usagePct = fmvCapacity > 0 ? projFMV / fmvCapacity * 100 : 100;
   const excess = projFMV - fmvCapacity;
 
-  // Check remaining capacity for next period
-  let remainingAfter = 0;
-  calYears.forEach(y => {
-    // This is simplified — in reality we'd need to check next offering's years too
-    remainingAfter += Math.max(0, 25000 - (buckets[y] ? buckets[y].used : 0)) ;
-  });
-  remainingAfter -= projFMV;
-
   if (excess > 0) {
-    // Red — exceeds
     recEl.className = 'recommendation red';
     titleEl.textContent = 'Exceeds $25K limit';
     const excessContrib = excess * (1 - discountPct / 100);
@@ -1482,17 +1775,26 @@ function generateRecommendation(currentOffering, salary, buckets, discountPct) {
     if (fmvCapacity <= 0) {
       bodyEl.innerHTML = `Your ${calYears.join('/')} capacity is fully consumed by prior offerings. Purchases this period would be refunded. <strong>Withdraw and re-enroll next period.</strong>`;
     }
-  } else if (usagePct > 80 || remainingAfter < 5000) {
-    // Amber — near limits
+  } else if (nextBlocked) {
+    recEl.className = 'recommendation red';
+    titleEl.textContent = 'Next period blocked';
+    bodyEl.innerHTML = `At ${currentOffering.rate}%, your current offering will fully consume the ${nextInfo.calYears.join('/')} capacity. You'll be <strong>blocked from purchasing</strong> in the next offering (${nextInfo.label}). Consider reducing your rate to preserve capacity.`;
+  } else if (nextSevere) {
+    recEl.className = 'recommendation amber';
+    titleEl.textContent = 'Next period severely constrained';
+    bodyEl.innerHTML = `At ${currentOffering.rate}%, the next offering (${nextInfo.label}) will only have $${fmt(nextFMV)} of FMV capacity \u2014 your max rate drops to <strong>${nextMaxRate.toFixed(1)}%</strong> (from ${currentOffering.rate}%). That's ~$${fmt(nextMaxContrib)} max contribution vs your normal $${fmt(halfContrib)}. Consider reducing this period to balance across both.`;
+  } else if (nextConstrained || usagePct > 80) {
     recEl.className = 'recommendation amber';
     titleEl.textContent = 'Near IRS limits';
-    const suggestedRate = Math.max(1, Math.floor(maxEffectiveRate * 0.7));
-    bodyEl.innerHTML = `At ${currentOffering.rate}%, you'll use $${fmt(projFMV)} of your $${fmt(fmvCapacity)} remaining capacity, leaving ~$${fmt(Math.max(0, remainingAfter))} for the next offering. Consider reducing to <strong>${suggestedRate}%</strong> to keep options open.`;
+    let msg = `At ${currentOffering.rate}%, you'll use $${fmt(projFMV)} of your $${fmt(fmvCapacity)} remaining capacity.`;
+    if (nextConstrained) {
+      msg += ` The next offering (${nextInfo.label}) will be capped at <strong>${nextMaxRate.toFixed(1)}%</strong> effective rate ($${fmt(nextFMV)} FMV remaining).`;
+    }
+    bodyEl.innerHTML = msg;
   } else {
-    // Green — clear
     recEl.className = 'recommendation green';
     titleEl.textContent = 'Clear to participate';
-    bodyEl.innerHTML = `You have plenty of capacity. At ${currentOffering.rate}%, you'll use $${fmt(projFMV)} of $${fmt(fmvCapacity)} remaining for ${calYears.join('/')}. No issues.`;
+    bodyEl.innerHTML = `At ${currentOffering.rate}%, you'll use $${fmt(projFMV)} of $${fmt(fmvCapacity)} remaining for ${calYears.join('/')}. Next period (${nextInfo.label}) has $${fmt(nextFMV)} capacity \u2014 no issues.`;
   }
 }
 
@@ -1506,26 +1808,40 @@ function recalculate() {
 
   // Read prices and rates from table inputs
   state.offerings.forEach((o, i) => {
-    // The table has price input and rate input per row
     const priceInput = document.querySelector(`#offerings-body input[data-idx="${i}"][type="number"][step="0.01"]`);
     const rateInput = document.querySelector(`#offerings-body input[data-idx="${i}"][type="number"][step="1"]`);
+    const fxInput = document.querySelector(`#offerings-body input[data-idx="${i}"][type="number"][step="0.0001"]`);
     if (priceInput) {
       const val = parseFloat(priceInput.value);
       if (!isNaN(val) && val > 0) o.startPrice = val;
     }
     if (rateInput) o.rate = parseInt(rateInput.value) || 0;
+    if (fxInput) {
+      const val = parseFloat(fxInput.value);
+      if (!isNaN(val) && val > 0) o.fxRate = val;
+    }
   });
+
+  const currentOffering = state.offerings.find(o => o.isCurrent);
+
+  // Empty state gate: hide results until meaningful data exists
+  const hintEl = document.getElementById('empty-hint');
+  if (!salary || !currentOffering || !currentOffering.startPrice) {
+    document.getElementById('results-section').classList.remove('visible');
+    if (hintEl) hintEl.classList.remove('hidden');
+    return;
+  }
+  if (hintEl) hintEl.classList.add('hidden');
 
   // Reset buckets
   const buckets = {};
-  const currentOffering = state.offerings.find(o => o.isCurrent);
 
   // Process all non-current offerings first (committed usage)
   state.offerings.forEach(o => {
     if (o.isCurrent || o.rate === 0 || !o.startPrice) return;
 
     const calYears = getCalendarYears(o.start, o.end);
-    const halfContrib = salary * (o.rate / 100) * (6 / 12);
+    const halfContrib = toUSD(salary * (o.rate / 100) * (6 / 12), o.fxRate);
     const fmvUsed = calculateFMVUsage(halfContrib, discountPct);
 
     const result = allocateToBuckets(fmvUsed, calYears, buckets);
@@ -1546,7 +1862,7 @@ function recalculate() {
   // Process current offering (projected)
   if (currentOffering && currentOffering.rate > 0 && currentOffering.startPrice) {
     const calYears = getCalendarYears(currentOffering.start, currentOffering.end);
-    const halfContrib = salary * (currentOffering.rate / 100) * (6 / 12);
+    const halfContrib = toUSD(salary * (currentOffering.rate / 100) * (6 / 12), currentOffering.fxRate);
     const fmvUsed = calculateFMVUsage(halfContrib, discountPct);
 
     // Ensure buckets exist for current offering's years
@@ -1569,13 +1885,34 @@ function recalculate() {
 
   state.buckets = buckets;
 
+  // Compute next offering projection
+  const nextStart = new Date(currentOffering.end);
+  nextStart.setDate(nextStart.getDate() + 1);
+  const nextEnd = new Date(nextStart);
+  nextEnd.setMonth(nextEnd.getMonth() + 6);
+  nextEnd.setDate(nextEnd.getDate() - 1);
+
+  const nextCalYears = getCalendarYears(nextStart, nextEnd);
+  let nextFMVCapacity = 0;
+  nextCalYears.forEach(y => {
+    const used = buckets[y] ? (buckets[y].used + (buckets[y].projected || 0)) : 0;
+    nextFMVCapacity += Math.max(0, 25000 - used);
+  });
+  const nextInfo = {
+    start: nextStart,
+    end: nextEnd,
+    label: formatOfferingLabel(nextStart, nextEnd),
+    calYears: nextCalYears,
+    fmvCapacity: nextFMVCapacity,
+  };
+
   // Show results
   document.getElementById('results-section').classList.add('visible');
 
   // Render everything
-  generateRecommendation(currentOffering, salary, buckets, discountPct);
+  generateRecommendation(currentOffering, salary, buckets, discountPct, nextInfo);
   renderBucketChart(buckets);
-  renderMetrics(currentOffering, salary, buckets, discountPct);
+  renderMetrics(currentOffering, salary, buckets, discountPct, nextInfo);
   renderSlider(currentOffering, salary, discountPct, hasLookback);
 }
 
@@ -1587,14 +1924,20 @@ function generatePrompt() {
   const maxRate = document.getElementById('max-rate').value;
   const maxShares = document.getElementById('max-shares').value;
   const salary = document.getElementById('salary').value;
+  const currency = state.currency;
   const currentOffering = state.offerings.find(o => o.isCurrent);
-  const p1 = document.getElementById('p1-start').value + ' to ' + document.getElementById('p1-end').value;
-  const p2 = document.getElementById('p2-start').value + ' to ' + document.getElementById('p2-end').value;
+  const pc = state.periodConfig;
+  const p1 = pc.p1Start + ' to ' + pc.p1End;
+  const p2 = pc.p2Start + ' to ' + pc.p2End;
 
   let offeringHistory = '';
   state.offerings.forEach(o => {
-    const fmv = o.rate > 0 && salary ? calculateFMVUsage(salary * (o.rate / 100) * (6 / 12), parseFloat(discountPct)) : 0;
-    offeringHistory += `  - ${o.label}: start price $${o.startPrice || '?'}, rate ${o.rate}%${o.isCurrent ? ' (current)' : ''}, FMV consumed ~$${fmt(fmv)}\n`;
+    const halfContrib = o.rate > 0 && salary ? toUSD(parseFloat(salary) * (o.rate / 100) * (6 / 12), o.fxRate) : 0;
+    const fmv = halfContrib > 0 ? calculateFMVUsage(halfContrib, parseFloat(discountPct)) : 0;
+    let line = `  - ${o.label}: start price $${o.startPrice || '?'}, rate ${o.rate}%${o.isCurrent ? ' (current)' : ''}`;
+    if (currency !== 'USD') line += `, FX ${(o.fxRate || state.fxRate).toFixed(2)}`;
+    line += `, FMV consumed ~$${fmt(fmv)}\n`;
+    offeringHistory += line;
   });
 
   let bucketStatus = '';
@@ -1627,14 +1970,26 @@ Under IRS Section 423, employees can purchase company stock at a discount (typic
 - Max contribution rate: ${maxRate}% of base salary
 - Max shares per offering: ${maxShares}
 - Offering schedule: ${p1} and ${p2} each year (recurring)
-
+${currency !== 'USD' ? `- Salary currency: ${currency} (FX rate: ~${state.fxRate.toFixed(2)} ${currency} per 1 USD)\n` : ''}
 ## My Situation
-- Annual base salary: $${salary || '?'}
+- Annual base salary: ${CURRENCY_MAP[currency]?.symbol || '$'}${salary || '?'}
 - Current offering: ${currentOffering ? formatDate(currentOffering.start) + ' to ' + formatDate(currentOffering.end) + ', start price $' + (currentOffering.startPrice || '?') : 'N/A'}
 - Contribution history:
 ${offeringHistory}
 ## Current $25K Bucket Status
 ${bucketStatus}
+## Next Period Projection
+${(function() {
+  const co = state.offerings.find(o => o.isCurrent);
+  if (!co) return '- No current offering\n';
+  const ns = new Date(co.end); ns.setDate(ns.getDate() + 1);
+  const ne = new Date(ns); ne.setMonth(ne.getMonth() + 6); ne.setDate(ne.getDate() - 1);
+  const nYears = getCalendarYears(ns, ne);
+  let nCap = 0;
+  nYears.forEach(y => { const b = state.buckets[y]; nCap += Math.max(0, 25000 - (b ? b.used + (b.projected || 0) : 0)); });
+  const nMaxC = nCap * (1 - parseFloat(discountPct) / 100);
+  return `- Next offering: ${formatOfferingLabel(ns, ne)}\n- FMV capacity remaining: $${fmt(nCap)}\n- Max contribution: $${fmt(nMaxC)}\n`;
+})()}
 ## My Question
 Given this situation, should I:
 1. Stay enrolled at ${currentOffering ? currentOffering.rate : '?'}%?
@@ -1650,11 +2005,81 @@ Please analyze the trade-offs, considering:
 
 function copyPrompt() {
   const prompt = generatePrompt();
-  navigator.clipboard.writeText(prompt).then(() => {
+  copyToClipboard(prompt).then(ok => {
     const btn = document.getElementById('copy-prompt-btn');
-    btn.textContent = 'Copied!';
+    btn.textContent = ok ? 'Copied!' : 'Copy failed';
     setTimeout(() => { btn.textContent = 'Copy prompt for AI discussion'; }, 2000);
   });
+}
+
+function buildURL(includePersonal) {
+  const params = new URLSearchParams();
+  params.set('ticker', document.getElementById('ticker').value.trim());
+  params.set('next_start', document.getElementById('period-start').value);
+  params.set('discount', document.getElementById('discount').value);
+  params.set('max_rate', document.getElementById('max-rate').value);
+  params.set('max_shares', document.getElementById('max-shares').value);
+  params.set('lookback', document.getElementById('lookback').checked);
+  params.set('years', document.getElementById('years').value);
+
+  const currency = document.getElementById('currency').value;
+  if (currency !== 'USD') params.set('currency', currency);
+
+  if (includePersonal) {
+    const salary = document.getElementById('salary').value;
+    if (salary) params.set('salary', salary);
+
+    state.offerings.forEach((o, i) => {
+      if (o.startPrice) params.set(`price_${i}`, o.startPrice);
+      if (o.rate) params.set(`rate_${i}`, o.rate);
+      if (o.fxRate && o.fxRate !== 1) params.set(`fx_${i}`, o.fxRate.toFixed(4));
+    });
+  }
+
+  return window.location.origin + window.location.pathname + '?' + params.toString();
+}
+
+function copyToClipboard(text) {
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    return navigator.clipboard.writeText(text).then(() => true).catch(() => fallbackCopy(text));
+  }
+  return Promise.resolve(fallbackCopy(text));
+}
+
+function fallbackCopy(text) {
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.cssText = 'position:fixed;left:-9999px';
+  document.body.appendChild(ta);
+  ta.select();
+  let ok = false;
+  try { ok = document.execCommand('copy'); } catch(e) {}
+  document.body.removeChild(ta);
+  if (!ok) showToast('Copy failed \u2014 try Ctrl+C manually');
+  return ok;
+}
+
+function copyShareableLink() {
+  const url = buildURL(false);
+  copyToClipboard(url).then(ok => { if (ok) showToast('Plan link copied'); });
+}
+
+function copyFullLink() {
+  const url = buildURL(true);
+  copyToClipboard(url).then(ok => { if (ok) showToast('Full link copied'); });
+}
+
+function showToast(msg) {
+  let toast = document.getElementById('toast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'toast';
+    toast.className = 'toast';
+    document.body.appendChild(toast);
+  }
+  toast.textContent = msg;
+  toast.classList.add('visible');
+  setTimeout(() => toast.classList.remove('visible'), 2000);
 }
 
 // ── UI Helpers ──
@@ -1693,35 +2118,48 @@ function setupListeners() {
   recalcFields.forEach(id => {
     const el = document.getElementById(id);
     el.addEventListener('change', () => {
-      if (id === 'years') {
-        rebuildOfferings();
-      }
+      if (id === 'years') rebuildOfferings();
       recalculate();
     });
   });
 
-  // Also recalculate on salary input (real-time)
   document.getElementById('salary').addEventListener('input', recalculate);
 
-  // Offering pattern changes → rebuild
-  ['p1-start', 'p1-end', 'p2-start', 'p2-end'].forEach(id => {
-    document.getElementById(id).addEventListener('change', () => {
-      rebuildOfferings();
-      if (state.priceData) populateOfferingPrices();
+  // Date picker → derive periods → rebuild
+  document.getElementById('period-start').addEventListener('change', () => {
+    updateDerivedPeriods();
+    rebuildOfferings();
+    if (state.priceData) populateOfferingPrices();
+    if (state.fxData) populateOfferingFXRates();
+    recalculate();
+  });
+
+  // Currency change
+  document.getElementById('currency').addEventListener('change', () => {
+    updateCurrencySymbol();
+    renderOfferingsTable();
+    if (state.currency !== 'USD') {
+      fetchFXRate().then(() => recalculate());
+    } else {
+      state.fxRate = 1;
+      state.fxData = null;
+      state.offerings.forEach(o => o.fxRate = 1);
       recalculate();
-    });
+    }
   });
 }
 
 function rebuildOfferings() {
   const numYears = parseInt(document.getElementById('years').value) || 2;
+  const defaultRate = parseInt(document.getElementById('max-rate').value) || 15;
   state.offerings = generateOfferings(
     document.getElementById('p1-start').value,
     document.getElementById('p1-end').value,
     document.getElementById('p2-start').value,
     document.getElementById('p2-end').value,
     new Date(),
-    numYears
+    numYears,
+    defaultRate
   );
   if (state.priceData) populateOfferingPrices();
   renderOfferingsTable();
@@ -1729,14 +2167,35 @@ function rebuildOfferings() {
 
 // ── Init ──
 function init() {
+  updateDerivedPeriods();
   parseURLParams();
+  updateCurrencySymbol();
   rebuildOfferings();
+
+  // Apply per-offering URL params (prices, rates, FX) as fallback/override
+  const urlParams = new URLSearchParams(window.location.search);
+  state.offerings.forEach((o, i) => {
+    if (urlParams.has(`price_${i}`)) o.startPrice = parseFloat(urlParams.get(`price_${i}`));
+    if (urlParams.has(`rate_${i}`)) o.rate = parseInt(urlParams.get(`rate_${i}`));
+    if (urlParams.has(`fx_${i}`)) o.fxRate = parseFloat(urlParams.get(`fx_${i}`));
+  });
+  renderOfferingsTable();
+
   setupListeners();
 
-  // Auto-fetch if ticker is set
+  // Trigger recalc if salary pre-filled from URL
+  if (document.getElementById('salary').value) {
+    recalculate();
+  }
+
+  // Fetch fresh prices (will override URL prices on success)
   const ticker = document.getElementById('ticker').value.trim();
   if (ticker) {
-    fetchPrices();
+    fetchPrices().then(() => {
+      if (state.currency !== 'USD') {
+        fetchFXRate().then(() => recalculate());
+      }
+    });
   }
 }
 
