@@ -1304,6 +1304,26 @@ function findBindingConstraint(salary, rate, maxRate, maxShares, startPrice, fmv
 }
 
 // ── Yahoo Finance Integration ──
+const CORS_PROXIES = [
+  url => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+  url => `https://corsproxy.io/?${encodeURIComponent(url)}`,
+];
+
+async function fetchViaProxy(targetUrl, retries) {
+  retries = retries || 2;
+  for (let attempt = 0; attempt < retries; attempt++) {
+    for (const makeProxy of CORS_PROXIES) {
+      try {
+        const resp = await fetch(makeProxy(targetUrl));
+        if (!resp.ok) continue;
+        return await resp.json();
+      } catch (e) { /* try next */ }
+    }
+    if (attempt < retries - 1) await new Promise(r => setTimeout(r, 1000 * (attempt + 1)));
+  }
+  throw new Error('All proxies failed after retries');
+}
+
 async function fetchPrices() {
   const ticker = document.getElementById('ticker').value.trim().toUpperCase();
   if (!ticker) return;
@@ -1315,10 +1335,7 @@ async function fetchPrices() {
   fetchBtn.disabled = true;
 
   try {
-    const url = `https://api.allorigins.win/raw?url=${encodeURIComponent('https://query2.finance.yahoo.com/v8/finance/chart/' + ticker + '?range=2y&interval=1d')}`;
-    const resp = await fetch(url);
-    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-    const data = await resp.json();
+    const data = await fetchViaProxy('https://query2.finance.yahoo.com/v8/finance/chart/' + ticker + '?range=2y&interval=1d');
 
     const result = data.chart?.result?.[0];
     if (!result) throw new Error('No data returned');
@@ -1388,10 +1405,7 @@ async function fetchFXRate() {
   renderOfferingsTable();
 
   try {
-    const url = `https://api.allorigins.win/raw?url=${encodeURIComponent('https://query2.finance.yahoo.com/v8/finance/chart/' + pair + '?range=2y&interval=1d')}`;
-    const resp = await fetch(url);
-    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-    const data = await resp.json();
+    const data = await fetchViaProxy('https://query2.finance.yahoo.com/v8/finance/chart/' + pair + '?range=2y&interval=1d');
 
     const result = data.chart?.result?.[0];
     if (!result) throw new Error('No FX data returned');
