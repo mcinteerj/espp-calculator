@@ -986,6 +986,7 @@ let state = {
   currency: 'USD',
   fxRate: 1,
   fxData: null,
+  fxLoading: false,
 };
 
 const OFFERING_COLORS = ['#0d9488', '#6366f1', '#0ea5e9', '#64748b', '#8b5cf6', '#06b6d4'];
@@ -1376,11 +1377,15 @@ async function fetchFXRate() {
   if (currency === 'USD') {
     state.fxRate = 1;
     state.fxData = null;
+    state.fxLoading = false;
     return;
   }
 
   const pair = CURRENCY_MAP[currency]?.pair;
   if (!pair) return;
+
+  state.fxLoading = true;
+  renderOfferingsTable();
 
   try {
     const url = `https://api.allorigins.win/raw?url=${encodeURIComponent('https://query2.finance.yahoo.com/v8/finance/chart/' + pair + '?range=2y&interval=1d')}`;
@@ -1402,11 +1407,14 @@ async function fetchFXRate() {
       }
     }
 
+    state.fxLoading = false;
     populateOfferingFXRates();
   } catch (err) {
     console.error('FX fetch error:', err);
     state.fxRate = 1;
     state.fxData = null;
+    state.fxLoading = false;
+    renderOfferingsTable();
     showToast('FX rate fetch failed \u2014 enter rates manually in the table');
   }
 }
@@ -1490,19 +1498,24 @@ function renderOfferingsTable() {
 
     if (isNonUSD) {
       const fxTd = document.createElement('td');
-      const fxInput = document.createElement('input');
-      fxInput.type = 'number';
-      fxInput.step = '0.0001';
-      fxInput.min = '0';
-      fxInput.value = (o.fxRate || state.fxRate).toFixed(4);
-      fxInput.style.width = '80px';
-      fxInput.dataset.idx = idx;
-      fxInput.addEventListener('change', (e) => {
-        const val = parseFloat(e.target.value);
-        if (!isNaN(val) && val > 0) state.offerings[idx].fxRate = val;
-        recalculate();
-      });
-      fxTd.appendChild(fxInput);
+      if (state.fxLoading) {
+        fxTd.innerHTML = '<span class="loading-spinner"></span>';
+        fxTd.style.cssText = 'color: var(--text-muted); font-size: 0.75rem;';
+      } else {
+        const fxInput = document.createElement('input');
+        fxInput.type = 'number';
+        fxInput.step = '0.0001';
+        fxInput.min = '0';
+        fxInput.value = (o.fxRate || state.fxRate).toFixed(4);
+        fxInput.style.width = '80px';
+        fxInput.dataset.idx = idx;
+        fxInput.addEventListener('change', (e) => {
+          const val = parseFloat(e.target.value);
+          if (!isNaN(val) && val > 0) state.offerings[idx].fxRate = val;
+          recalculate();
+        });
+        fxTd.appendChild(fxInput);
+      }
       tr.appendChild(fxTd);
     }
 
