@@ -3,6 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <title>Section 423 ESPP Calculator</title>
 <style>
 /* ── Reset & Base ── */
@@ -998,7 +1001,7 @@ Low start price  ($150):  $25,000 ÷ $150 = 166.7 shares max</pre>
   <p>Stock prices are sourced from Yahoo Finance and may not reflect the exact closing prices used by your plan administrator.</p>
   <p><a href="https://www.law.cornell.edu/uscode/text/26/423" target="_blank" rel="noopener">IRS Section 423 — Employee Stock Purchase Plans</a></p>
   <p style="margin-top: 0.75rem;">Built with care. Use at your own discretion.</p>
-  <p style="margin-top: 0.5rem; font-family: var(--mono); font-size: 0.625rem; opacity: 0.5;">v0ebe891</p>
+  <p id="version-info" style="margin-top: 0.5rem; font-family: var(--mono); font-size: 0.625rem; opacity: 0.5;"></p>
 </section>
 
 </main>
@@ -2258,6 +2261,24 @@ function init() {
 }
 
 document.addEventListener('DOMContentLoaded', init);
+
+// ── Version Check ──
+(function checkVersion() {
+  const el = document.getElementById('version-info');
+  if (!el) return;
+  fetch('https://api.github.com/repos/mcinteerj/espp-calculator/commits/main', { cache: 'no-store' })
+    .then(r => r.json())
+    .then(data => {
+      const hash = data.sha?.substring(0, 7);
+      const date = data.commit?.committer?.date;
+      if (!hash) return;
+      const d = new Date(date);
+      const when = d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+      const time = d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+      el.textContent = `latest: ${hash} \u00b7 ${when} ${time}`;
+    })
+    .catch(() => { el.textContent = 'version check unavailable'; });
+})();
 </script>
 
 </body>
